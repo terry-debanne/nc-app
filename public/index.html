@@ -173,6 +173,12 @@ td.mono{font-family:monospace;font-size:.82rem}
 .param-add input{flex:1;padding:7px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.85rem;outline:none}
 .param-add input:focus{border-color:var(--accent)}
 .param-add button{padding:7px 12px;background:var(--accent);border:none;border-radius:7px;color:#fff;cursor:pointer;font-size:.85rem;font-weight:600}
+/* Select + bouton ajout rapide */
+.sel-add-wrap{display:flex;gap:6px;align-items:center}
+.sel-add-wrap select{flex:1}
+.btn-sel-add{padding:0 10px;height:36px;background:rgba(79,142,247,.15);border:1px solid rgba(79,142,247,.3);border-radius:7px;color:var(--accent);cursor:pointer;font-size:1.1rem;font-weight:700;transition:all .15s;flex-shrink:0;line-height:1}
+.btn-sel-add:hover{background:rgba(79,142,247,.3)}
+.btn-sel-add[style*="display:none"]{display:none!important}
 /* Client selector dans formulaire */
 .client-select-wrap{position:relative}
 .client-dropdown{position:absolute;top:100%;left:0;right:0;background:var(--bg2);border:1px solid var(--border);border-radius:8px;z-index:50;max-height:200px;overflow-y:auto;margin-top:4px;box-shadow:var(--shadow)}
@@ -380,8 +386,8 @@ td.mono{font-family:monospace;font-size:.82rem}
     </div>
     <div class="form-section"><div class="form-section-title">Défaut constaté</div>
       <div class="form-grid">
-        <div class="form-field"><label>Opération</label><select id="nci-operation"><option value="">--</option></select></div>
-        <div class="form-field"><label>Type de défaut</label><select id="nci-type_defaut"><option value="">--</option></select></div>
+        <div class="form-field"><label>Opération</label><div class="sel-add-wrap"><select id="nci-operation"><option value="">--</option></select><button class="btn-sel-add" id="btn-add-nci-operation" onclick="quickAdd('operation','nci-operation')" title="Ajouter une opération">+</button></div></div>
+        <div class="form-field"><label>Type de défaut</label><div class="sel-add-wrap"><select id="nci-type_defaut"><option value="">--</option></select><button class="btn-sel-add" id="btn-add-nci-type_defaut" onclick="quickAdd('type_defaut','nci-type_defaut')" title="Ajouter un type de défaut">+</button></div></div>
         <div class="form-field"><label>Qté NC</label><input type="number" id="nci-qte_nc" min="0"></div>
         <div class="form-field"><label>Qté totale</label><input type="number" id="nci-qte_totale" min="0"></div>
         <div class="form-field span-2"><label>Description</label><textarea id="nci-description"></textarea></div>
@@ -429,7 +435,7 @@ td.mono{font-family:monospace;font-size:.82rem}
     </div>
     <div class="form-section"><div class="form-section-title">Défaut réclamé</div>
       <div class="form-grid">
-        <div class="form-field"><label>Type de défaut</label><select id="nce-type_defaut"><option value="">--</option></select></div>
+        <div class="form-field"><label>Type de défaut</label><div class="sel-add-wrap"><select id="nce-type_defaut"><option value="">--</option></select><button class="btn-sel-add" id="btn-add-nce-type_defaut" onclick="quickAdd('type_defaut','nce-type_defaut')" title="Ajouter un type de défaut">+</button></div></div>
         <div class="form-field"><label>Décision</label><select id="nce-decision"><option value="">--</option></select></div>
         <div class="form-field"><label>Qté réclamée</label><input type="number" id="nce-qte_reclamee" min="0"></div>
         <div class="form-field"><label>Qté livrée</label><input type="number" id="nce-qte_livree" min="0"></div>
@@ -487,7 +493,7 @@ td.mono{font-family:monospace;font-size:.82rem}
     </div>
     <div class="form-section"><div class="form-section-title">Analyse</div>
       <div class="form-grid">
-        <div class="form-field"><label>Type de cause</label><select id="nct-type_cause"><option value="">--</option></select></div>
+        <div class="form-field"><label>Type de cause</label><div class="sel-add-wrap"><select id="nct-type_cause"><option value="">--</option></select><button class="btn-sel-add" id="btn-add-nct-type_cause" onclick="quickAdd('type_cause','nct-type_cause')" title="Ajouter un type de cause">+</button></div></div>
         <div class="form-field"><label>Responsable</label><select id="nct-responsable"><option value="">--</option></select></div>
         <div class="form-field span-2"><label>Cause de l'écart</label><textarea id="nct-cause"></textarea></div>
         <div class="form-field span-2"><label>Action d'amélioration</label><textarea id="nct-action_amelioration"></textarea></div>
@@ -513,7 +519,7 @@ td.mono{font-family:monospace;font-size:.82rem}
     </div>
     <div class="form-section"><div class="form-section-title">Dégradation</div>
       <div class="form-grid">
-        <div class="form-field"><label>Type</label><select id="ncm-type_degradation"><option value="">--</option></select></div>
+        <div class="form-field"><label>Type</label><div class="sel-add-wrap"><select id="ncm-type_degradation"><option value="">--</option></select><button class="btn-sel-add" id="btn-add-ncm-type_degradation" onclick="quickAdd('type_degradation','ncm-type_degradation')" title="Ajouter un type de dégradation">+</button></div></div>
         <div class="form-field"><label>Gravité</label>
           <select id="ncm-gravite"><option value="1">1 — Mineur</option><option value="2">2 — Modéré</option><option value="3">3 — Majeur</option></select>
         </div>
@@ -653,6 +659,7 @@ async function startApp(){
   }
   if(USER.role==='admin'){$('nav-admin').style.display='flex';}
   await loadParams();
+  updateQuickAddButtons();
   showPage('dashboard');
 }
 
@@ -1096,6 +1103,36 @@ async function saveUser(){
     else await api('POST','/api/utilisateurs',body);
     closeModal('user');toast('Utilisateur enregistré ✓');loadUsers();
   }catch(e){toast(e.message,'error');}
+}
+
+// ── QUICK ADD depuis formulaire ───────────────────────────────────────────────
+async function quickAdd(categorie, selId) {
+  const labels = {
+    operation: 'opération',
+    type_defaut: 'type de défaut',
+    type_cause: 'type de cause',
+    type_degradation: 'type de dégradation',
+    decision: 'décision'
+  };
+  const val = prompt(`Nouvelle valeur pour "${labels[categorie] || categorie}" :`);
+  if (!val || !val.trim()) return;
+  try {
+    await api('POST', '/api/parametres', { categorie, valeur: val.trim() });
+    await loadParams();
+    // Sélectionner automatiquement la nouvelle valeur
+    const sel = $(selId);
+    if (sel) sel.value = val.trim();
+    toast(`"${val.trim()}" ajouté ✓`);
+  } catch(e) {
+    toast(e.message, 'error');
+  }
+}
+
+function updateQuickAddButtons() {
+  const canAdd = ['admin', 'manager'].includes(USER?.role);
+  document.querySelectorAll('.btn-sel-add').forEach(btn => {
+    btn.style.display = canAdd ? '' : 'none';
+  });
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
