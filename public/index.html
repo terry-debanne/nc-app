@@ -401,9 +401,9 @@ td.mono{font-family:monospace;font-size:.82rem}
     </div>
     <div class="form-section"><div class="form-section-title">Traitement</div>
       <div class="form-grid">
-        <div class="form-field span-2"><label>Cause identifiée</label><textarea id="nci-cause"></textarea></div>
+        <div class="form-field span-2"><label>Cause identifiée</label><div class="sel-add-wrap"><select id="nci-cause"><option value="">--</option></select><button class="btn-sel-add" id="btn-add-nci-cause" onclick="quickAdd('cause','nci-cause')" title="Ajouter une cause">+</button></div></div>
         <div class="form-field span-2"><label>Action corrective</label><textarea id="nci-action_corrective"></textarea></div>
-        <div class="form-field"><label>Responsable</label><select id="nci-responsable"><option value="">--</option></select></div>
+        <div class="form-field"><label>Responsable</label><div class="sel-add-wrap"><select id="nci-responsable"><option value="">--</option></select><button class="btn-sel-add" id="btn-add-nci-responsable" onclick="quickAdd('responsable','nci-responsable')" title="Ajouter un responsable">+</button></div></div>
         <div class="form-field"><label>Délai clôture</label><input type="date" id="nci-delai_cloture"></div>
         <div class="form-field"><label>Statut</label><select id="nci-statut"><option>En attente</option><option>En cours</option><option>Clôturé</option><option>Annulé</option></select></div>
       </div>
@@ -450,9 +450,9 @@ td.mono{font-family:monospace;font-size:.82rem}
     </div>
     <div class="form-section"><div class="form-section-title">Traitement</div>
       <div class="form-grid">
-        <div class="form-field span-2"><label>Cause racine</label><textarea id="nce-cause_racine"></textarea></div>
+        <div class="form-field span-2"><label>Cause racine</label><div class="sel-add-wrap"><select id="nce-cause_racine"><option value="">--</option></select><button class="btn-sel-add" id="btn-add-nce-cause_racine" onclick="quickAdd('cause','nce-cause_racine')" title="Ajouter une cause">+</button></div></div>
         <div class="form-field span-2"><label>Action corrective</label><textarea id="nce-action_corrective"></textarea></div>
-        <div class="form-field"><label>Responsable</label><select id="nce-responsable"><option value="">--</option></select></div>
+        <div class="form-field"><label>Responsable</label><div class="sel-add-wrap"><select id="nce-responsable"><option value="">--</option></select><button class="btn-sel-add" id="btn-add-nce-responsable" onclick="quickAdd('responsable','nce-responsable')" title="Ajouter un responsable">+</button></div></div>
         <div class="form-field"><label>Délai réponse</label><input type="date" id="nce-delai_reponse"></div>
         <div class="form-field"><label>Statut</label><select id="nce-statut"><option>En attente</option><option>En cours</option><option>Clôturé</option><option>Litige</option></select></div>
       </div>
@@ -494,8 +494,8 @@ td.mono{font-family:monospace;font-size:.82rem}
     <div class="form-section"><div class="form-section-title">Analyse</div>
       <div class="form-grid">
         <div class="form-field"><label>Type de cause</label><div class="sel-add-wrap"><select id="nct-type_cause"><option value="">--</option></select><button class="btn-sel-add" id="btn-add-nct-type_cause" onclick="quickAdd('type_cause','nct-type_cause')" title="Ajouter un type de cause">+</button></div></div>
-        <div class="form-field"><label>Responsable</label><select id="nct-responsable"><option value="">--</option></select></div>
-        <div class="form-field span-2"><label>Cause de l'écart</label><textarea id="nct-cause"></textarea></div>
+        <div class="form-field"><label>Responsable</label><div class="sel-add-wrap"><select id="nct-responsable"><option value="">--</option></select><button class="btn-sel-add" id="btn-add-nct-responsable" onclick="quickAdd('responsable','nct-responsable')" title="Ajouter un responsable">+</button></div></div>
+        <div class="form-field span-2"><label>Cause de l'écart</label><div class="sel-add-wrap"><select id="nct-cause"><option value="">--</option></select><button class="btn-sel-add" id="btn-add-nct-cause" onclick="quickAdd('cause','nct-cause')" title="Ajouter une cause">+</button></div></div>
         <div class="form-field span-2"><label>Action d'amélioration</label><textarea id="nct-action_amelioration"></textarea></div>
         <div class="form-field"><label>Statut</label><select id="nct-statut"><option>En attente</option><option>En cours</option><option>Clôturé</option></select></div>
       </div>
@@ -692,9 +692,9 @@ async function loadParams(){
 
 function fillParamSelects(){
   const map={
-    'nci-operation':'operation','nci-type_defaut':'type_defaut',
-    'nce-type_defaut':'type_defaut','nce-decision':'decision',
-    'nct-type_cause':'type_cause',
+    'nci-operation':'operation','nci-type_defaut':'type_defaut','nci-cause':'cause',
+    'nce-type_defaut':'type_defaut','nce-decision':'decision','nce-cause_racine':'cause',
+    'nct-type_cause':'type_cause','nct-cause':'cause',
     'ncm-type_degradation':'type_degradation'
   };
   Object.entries(map).forEach(([selId,cat])=>{
@@ -710,18 +710,21 @@ function fillParamSelects(){
 
 function fillRespSelects(){
   const ids=['nci-responsable','nce-responsable','nct-responsable'];
-  const resps=['Terry','Ambre','Vincent','Tom','Cédric','Dorothée'];
   ids.forEach(id=>{
     const sel=$(id);if(!sel)return;
     const cur=sel.value;
     sel.innerHTML='<option value="">--</option>';
-    resps.forEach(r=>{const o=document.createElement('option');o.value=r;o.textContent=r;sel.appendChild(o);});
+    (PARAMS['responsable']||[]).forEach(p=>{
+      const o=document.createElement('option');o.value=p.valeur;o.textContent=p.valeur;sel.appendChild(o);
+    });
     sel.value=cur;
   });
 }
 
 function loadParamsPage(){
   const cats=[
+    {key:'responsable',label:'Responsables / Intervenants'},
+    {key:'cause',label:'Causes de NC'},
     {key:'operation',label:'Opérations concernées'},
     {key:'type_defaut',label:'Types de défauts'},
     {key:'type_cause',label:'Types de causes (temps)'},

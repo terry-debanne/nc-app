@@ -216,6 +216,21 @@ async function initDB() {
         ['decision', 'Reprise gratuite', 3],
         ['decision', 'Remplacement', 4],
         ['decision', 'Refus réclamation', 5],
+        ['responsable', 'Terry', 1],
+        ['responsable', 'Ambre', 2],
+        ['responsable', 'Vincent', 3],
+        ['responsable', 'Tom', 4],
+        ['responsable', 'Cédric', 5],
+        ['responsable', 'Dorothée', 6],
+        ['cause', 'Erreur opérateur', 1],
+        ['cause', 'Erreur de gamme / fiche OF', 2],
+        ['cause', 'Défaut matière première', 3],
+        ['cause', 'Panne équipement', 4],
+        ['cause', 'Mauvaise préparation surface', 5],
+        ['cause', 'Paramètres four incorrects', 6],
+        ['cause', 'Erreur étiquetage / RAL', 7],
+        ['cause', 'Problème emballage / transport', 8],
+        ['cause', 'Autre', 9],
       ];
       for (const [cat, val, ord] of defaults) {
         await client.query(
@@ -224,6 +239,22 @@ async function initDB() {
         );
       }
       console.log('[DB] Parametres par defaut inseres');
+    }
+
+    // Migration : ajouter responsable et cause si manquants
+    const { rows: hasResp } = await client.query("SELECT COUNT(*) FROM parametres WHERE categorie='responsable'");
+    if (parseInt(hasResp[0].count) === 0) {
+      const defResps = [['Terry',1],['Ambre',2],['Vincent',3],['Tom',4],['Cédric',5],['Dorothée',6]];
+      for (const [val, ord] of defResps)
+        await client.query("INSERT INTO parametres (categorie,valeur,ordre) VALUES ('responsable',$1,$2)", [val, ord]);
+      console.log('[DB] Responsables par defaut inseres');
+    }
+    const { rows: hasCause } = await client.query("SELECT COUNT(*) FROM parametres WHERE categorie='cause'");
+    if (parseInt(hasCause[0].count) === 0) {
+      const defCauses = [['Erreur opérateur',1],['Erreur de gamme / fiche OF',2],['Défaut matière première',3],['Panne équipement',4],['Mauvaise préparation surface',5],['Paramètres four incorrects',6],['Erreur étiquetage / RAL',7],['Problème emballage / transport',8],['Autre',9]];
+      for (const [val, ord] of defCauses)
+        await client.query("INSERT INTO parametres (categorie,valeur,ordre) VALUES ('cause',$1,$2)", [val, ord]);
+      console.log('[DB] Causes par defaut inserees');
     }
 
     console.log('[DB] Base de donnees initialisee.');
