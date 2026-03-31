@@ -419,9 +419,65 @@ app.get('/api/stats', authMiddleware, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// ── RAPPORT PDF ───────────────────────────────────────────────────────────────
+app.get('/api/rapport', authMiddleware, async (req, res) => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+  const monthStart = `${year}-${String(month).padStart(2,'0')}-01`;
+  const monthEnd = `${year}-${String(month).padStart(2,'0')}-${new Date(year,month,0).getDate()}`;
+  const yearStart = `${year}-01-01`;
+  const yearEnd = `${year}-12-31`;
+
+  async function getStats(dateStart, dateEnd) {
+    const [nci, nce, nct, ncm, couts, top_defauts, top_causes] = await Promise.all([
+      pool.query(`SELECT COUNT(*) FROM nc_internes WHERE date_detection BETWEEN $1 AND $2`, [dateStart, dateEnd]),
+      pool.query(`SELECT COUNT(*) FROM nc_externes WHERE date_reclamation BETWEEN $1 AND $2`, [dateStart, dateEnd]),
+      pool.query(`SELECT COUNT(*) FROM nc_temps WHERE date_fabrication BETWEEN $1 AND $2`, [dateStart, dateEnd]),
+      pool.query(`SELECT COUNT(*) FROM nc_materiel WHERE date_constat BETWEEN $1 AND $2`, [dateStart, dateEnd]),
+      pool.query(`SELECT
+        COALESCE(SUM(n.cout_interne),0) AS cout_interne_nci,
+        COALESCE(SUM(n.montant_client),0) AS montant_client_nci
+        FROM nc_internes n WHERE date_detection BETWEEN $1 AND $2`, [dateStart, dateEnd]),
+      pool.query(`SELECT type_defaut AS label, COUNT(*) AS total
+        FROM nc_internes WHERE date_detection BETWEEN $1 AND $2 AND type_defaut IS NOT NULL AND type_defaut != ''
+        GROUP BY type_defaut ORDER BY total DESC LIMIT 5`, [dateStart, dateEnd]),
+      pool.query(`SELECT cause AS label, COUNT(*) AS total
+        FROM nc_internes WHERE date_detection BETWEEN $1 AND $2 AND cause IS NOT NULL AND cause != ''
+        GROUP BY cause ORDER BY total DESC LIMIT 5`, [dateStart, dateEnd]),
+    ]);
+    const [cout_nce, cout_nct, cout_ncm] = await Promise.all([
+      pool.query(`SELECT COALESCE(SUM(cout_interne),0) AS ci, COALESCE(SUM(impact_financier),0) AS imp FROM nc_externes WHERE date_reclamation BETWEEN $1 AND $2`, [dateStart, dateEnd]),
+      pool.query(`SELECT COALESCE(SUM(cout_interne),0) AS ci FROM nc_temps WHERE date_fabrication BETWEEN $1 AND $2`, [dateStart, dateEnd]),
+      pool.query(`SELECT COALESCE(SUM(cout_pieces+cout_mo+cout_indisponibilite),0) AS total FROM nc_materiel WHERE date_constat BETWEEN $1 AND $2`, [dateStart, dateEnd]),
+    ]);
+    return {
+      nci: parseInt(nci.rows[0].count),
+      nce: parseInt(nce.rows[0].count),
+      nct: parseInt(nct.rows[0].count),
+      ncm: parseInt(ncm.rows[0].count),
+      cout_interne: parseFloat(couts.rows[0].cout_interne_nci) + parseFloat(cout_nce.rows[0].ci) + parseFloat(cout_nct.rows[0].ci),
+      montant_client: parseFloat(couts.rows[0].montant_client_nci) + parseFloat(cout_nce.rows[0].imp),
+      cout_materiel: parseFloat(cout_ncm.rows[0].total),
+      top_defauts: top_defauts.rows,
+      top_causes: top_causes.rows,
+    };
+  }
+
+  try {
+    const [mois, annee] = await Promise.all([
+      getStats(monthStart, monthEnd),
+      getStats(yearStart, yearEnd),
+    ]);
+    const moisLabel = new Date(year, month-1, 1).toLocaleDateString('fr-FR', {month:'long', year:'numeric'});
+    res.json({ mois, annee, moisLabel, year, generatedAt: now.toISOString() });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
+
 
 initDB().then(() => {
   app.listen(PORT, () => console.log(`[NC-App] Serveur demarre sur le port ${PORT}`));

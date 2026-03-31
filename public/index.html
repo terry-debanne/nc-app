@@ -194,6 +194,16 @@ td.mono{font-family:monospace;font-size:.82rem}
   .dash-grid{grid-template-columns:1fr}
   .params-grid{grid-template-columns:1fr}
 }
+@media print {
+  .sidebar, .page-header .btn, #rapport-loading { display: none !important; }
+  .main { margin-left: 0 !important; padding: 0 !important; }
+  .page { display: block !important; }
+  #page-rapport { display: block !important; }
+  body { background: #fff !important; color: #000 !important; }
+  .rapport-card { break-inside: avoid; }
+  .rapport-section { break-before: page; }
+  .rapport-section:first-child { break-before: avoid; }
+}
 </style>
 </head>
 <body>
@@ -229,6 +239,7 @@ td.mono{font-family:monospace;font-size:.82rem}
       <div class="nav-item" onclick="showPage('ncm')" id="nav-ncm"><span class="nav-dot" style="background:var(--ncm)"></span> NC Matériel</div>
       <div class="nav-section">Gestion</div>
       <div class="nav-item" onclick="showPage('clients')" id="nav-clients"><span class="icon">🏢</span> Clients</div>
+      <div class="nav-item" onclick="showPage('rapport')" id="nav-rapport"><span class="icon">📄</span> Rapport PDF</div>
       <div class="nav-section" id="nav-section-admin" style="display:none">Administration</div>
       <div class="nav-item" onclick="showPage('params')" id="nav-params" style="display:none"><span class="icon">⚙️</span> Paramètres</div>
       <div class="nav-item" onclick="showPage('admin')" id="nav-admin" style="display:none"><span class="icon">👥</span> Utilisateurs</div>
@@ -346,6 +357,16 @@ td.mono{font-family:monospace;font-size:.82rem}
         <input type="text" class="search-input" placeholder="Rechercher un client…" oninput="loadClients(this.value)">
       </div>
       <div class="clients-grid" id="clients-grid"></div>
+    </div>
+
+    <!-- RAPPORT -->
+    <div class="page" id="page-rapport">
+      <div class="page-header">
+        <div class="page-title">📄 Rapport PDF <span>Récapitulatif Non-Conformités</span></div>
+        <button class="btn btn-add" onclick="printRapport()">🖨️ Imprimer / Télécharger PDF</button>
+      </div>
+      <div id="rapport-loading" style="color:var(--text2);padding:40px;text-align:center">Chargement des données…</div>
+      <div id="rapport-content" style="display:none"></div>
     </div>
 
     <!-- PARAMS -->
@@ -671,7 +692,7 @@ function showPage(p){
   const ni=$(`nav-${p}`);if(ni)ni.classList.add('active');
   if(p==='dashboard')loadDashboard();
   else if(['nci','nce','nct','ncm'].includes(p))loadList(p);
-  else if(p==='clients')loadClients();
+  else if(p==='rapport')loadRapport();
   else if(p==='params')loadParamsPage();
   else if(p==='admin')loadUsers();
 }
@@ -907,6 +928,124 @@ async function delParam(id,cat){
     loadParamsPage();
     toast('Valeur supprimée');
   }catch(e){toast(e.message,'error');}
+}
+
+// ── RAPPORT PDF ───────────────────────────────────────────────────────────────
+async function loadRapport() {
+  $('rapport-loading').style.display = 'block';
+  $('rapport-content').style.display = 'none';
+  try {
+    const d = await api('GET', '/api/rapport');
+    const genDate = new Date(d.generatedAt).toLocaleDateString('fr-FR', {day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'});
+
+    function renderSection(data, titre, periode) {
+      const total = data.nci + data.nce + data.nct + data.ncm;
+      const fe = n => n > 0 ? Number(n).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €' : '—';
+
+      const barMax = Math.max(...[...data.top_defauts,...data.top_causes].map(x=>parseInt(x.total)||0), 1);
+      const bar = (val) => {
+        const pct = Math.round((parseInt(val)||0) / barMax * 100);
+        return `<div style="display:flex;align-items:center;gap:10px">
+          <div style="flex:1;background:var(--bg3);border-radius:4px;height:8px;overflow:hidden">
+            <div style="width:${pct}%;background:var(--accent);height:100%;border-radius:4px"></div>
+          </div>
+          <span style="font-size:.78rem;font-weight:700;min-width:20px;text-align:right">${val}</span>
+        </div>`;
+      };
+
+      return `
+      <div class="rapport-section" style="margin-bottom:32px">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:var(--bg2);border:1px solid var(--border);border-radius:10px 10px 0 0;border-bottom:3px solid var(--accent)">
+          <div>
+            <div style="font-size:1.1rem;font-weight:700">${titre}</div>
+            <div style="font-size:.82rem;color:var(--text2);margin-top:2px">${periode}</div>
+          </div>
+          <div style="font-size:2rem;font-weight:700;color:var(--accent)">${total}</div>
+        </div>
+
+        <div style="background:var(--bg2);border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px;padding:20px">
+
+          <!-- KPIs NC par type -->
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px">
+            ${[
+              {label:'NC Internes',val:data.nci,color:'var(--nci)'},
+              {label:'NC Externes',val:data.nce,color:'var(--nce)'},
+              {label:'NC Temps',val:data.nct,color:'var(--nct)'},
+              {label:'NC Matériel',val:data.ncm,color:'var(--ncm)'},
+            ].map(k=>`
+              <div class="rapport-card" style="background:var(--bg3);border:1px solid var(--border);border-left:4px solid ${k.color};border-radius:8px;padding:12px 14px">
+                <div style="font-size:.72rem;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;font-weight:600">${k.label}</div>
+                <div style="font-size:1.8rem;font-weight:700;color:${k.color};margin-top:2px">${k.val}</div>
+              </div>`).join('')}
+          </div>
+
+          <!-- Coûts -->
+          <div style="margin-bottom:20px">
+            <div style="font-size:.78rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)">Coûts financiers</div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+              ${[
+                {label:'💰 Coût interne total',val:fe(data.cout_interne),sub:'Retraitement MO + matière'},
+                {label:'🧾 Impact client total',val:fe(data.montant_client),sub:'Avoirs + réclamations'},
+                {label:'🔧 Coût dégradations',val:fe(data.cout_materiel),sub:'Pièces + MO + indisponibilité'},
+              ].map(c=>`
+                <div class="rapport-card" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 14px">
+                  <div style="font-size:.75rem;color:var(--text2);font-weight:600;margin-bottom:4px">${c.label}</div>
+                  <div style="font-size:1.1rem;font-weight:700;color:var(--text)">${c.val}</div>
+                  <div style="font-size:.7rem;color:var(--text2);margin-top:2px">${c.sub}</div>
+                </div>`).join('')}
+            </div>
+          </div>
+
+          <!-- Top défauts + Top causes -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <div class="rapport-card">
+              <div style="font-size:.78rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)">Top 5 défauts (NCI)</div>
+              ${data.top_defauts.length
+                ? data.top_defauts.map(d=>`
+                  <div style="margin-bottom:8px">
+                    <div style="font-size:.82rem;margin-bottom:3px">${d.label||'Non défini'}</div>
+                    ${bar(d.total)}
+                  </div>`).join('')
+                : '<div style="font-size:.82rem;color:var(--text2)">Aucune donnée</div>'}
+            </div>
+            <div class="rapport-card">
+              <div style="font-size:.78rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)">Top 5 causes</div>
+              ${data.top_causes.length
+                ? data.top_causes.map(c=>`
+                  <div style="margin-bottom:8px">
+                    <div style="font-size:.82rem;margin-bottom:3px">${c.label||'Non défini'}</div>
+                    ${bar(c.total)}
+                  </div>`).join('')
+                : '<div style="font-size:.82rem;color:var(--text2)">Aucune donnée</div>'}
+            </div>
+          </div>
+
+        </div>
+      </div>`;
+    }
+
+    const moisNom = d.moisLabel.charAt(0).toUpperCase() + d.moisLabel.slice(1);
+
+    $('rapport-content').innerHTML = `
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px 20px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-size:1rem;font-weight:700">Rapport Non-Conformités — Ardèche Thermolaquage</div>
+          <div style="font-size:.8rem;color:var(--text2);margin-top:2px">Généré le ${genDate} par ${USER.nom}${USER.prenom?' '+USER.prenom:''}</div>
+        </div>
+        <div style="font-size:.75rem;color:var(--text2);text-align:right">AMA ITEA<br>Ardèche Thermolaquage</div>
+      </div>
+      ${renderSection(d.mois, 'Rapport du mois', moisNom)}
+      ${renderSection(d.annee, 'Rapport annuel', `Année ${d.year} — cumul au ${new Date().toLocaleDateString('fr-FR')}`)}
+    `;
+    $('rapport-loading').style.display = 'none';
+    $('rapport-content').style.display = 'block';
+  } catch(e) {
+    $('rapport-loading').textContent = 'Erreur : ' + e.message;
+  }
+}
+
+function printRapport() {
+  window.print();
 }
 
 // ── CLIENTS ───────────────────────────────────────────────────────────────────
