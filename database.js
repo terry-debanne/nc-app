@@ -23,18 +23,43 @@ async function initDB() {
       created_at TIMESTAMP DEFAULT NOW()
     )`);
 
+    await client.query(`CREATE TABLE IF NOT EXISTS clients (
+      id SERIAL PRIMARY KEY,
+      nom VARCHAR(150) NOT NULL,
+      contact VARCHAR(150),
+      email VARCHAR(150),
+      telephone VARCHAR(50),
+      adresse TEXT,
+      type_client VARCHAR(50) DEFAULT 'Particulier',
+      actif BOOLEAN DEFAULT true,
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW()
+    )`);
+
+    await client.query(`CREATE TABLE IF NOT EXISTS parametres (
+      id SERIAL PRIMARY KEY,
+      categorie VARCHAR(50) NOT NULL,
+      valeur VARCHAR(200) NOT NULL,
+      ordre INTEGER DEFAULT 0,
+      actif BOOLEAN DEFAULT true,
+      created_at TIMESTAMP DEFAULT NOW()
+    )`);
+
     await client.query(`CREATE TABLE IF NOT EXISTS nc_internes (
       id SERIAL PRIMARY KEY,
       numero VARCHAR(30) UNIQUE NOT NULL,
       date_detection DATE NOT NULL,
       of_ref VARCHAR(100),
-      client VARCHAR(150),
+      client_id INTEGER REFERENCES clients(id),
+      client_nom VARCHAR(150),
       designation_piece TEXT,
       operation VARCHAR(100),
       type_defaut VARCHAR(100),
       description TEXT,
       qte_nc INTEGER,
       qte_totale INTEGER,
+      cout_interne NUMERIC(10,2),
+      montant_client NUMERIC(10,2),
       cause TEXT,
       action_corrective TEXT,
       responsable VARCHAR(100),
@@ -51,13 +76,15 @@ async function initDB() {
       date_reclamation DATE NOT NULL,
       date_livraison DATE,
       numero_bl VARCHAR(100),
-      client VARCHAR(150),
+      client_id INTEGER REFERENCES clients(id),
+      client_nom VARCHAR(150),
       contact_client VARCHAR(150),
       designation_piece TEXT,
       type_defaut VARCHAR(100),
       description TEXT,
       qte_reclamee INTEGER,
       qte_livree INTEGER,
+      cout_interne NUMERIC(10,2),
       impact_financier NUMERIC(10,2),
       decision VARCHAR(100),
       cause_racine TEXT,
@@ -75,11 +102,13 @@ async function initDB() {
       numero VARCHAR(30) UNIQUE NOT NULL,
       date_fabrication DATE NOT NULL,
       of_ref VARCHAR(100),
-      client VARCHAR(150),
+      client_id INTEGER REFERENCES clients(id),
+      client_nom VARCHAR(150),
       operation VARCHAR(150),
       temps_prevu INTEGER,
       temps_reel INTEGER,
       nbre_pieces INTEGER,
+      cout_interne NUMERIC(10,2),
       cause TEXT,
       type_cause VARCHAR(100),
       action_amelioration TEXT,
@@ -114,8 +143,26 @@ async function initDB() {
       updated_at TIMESTAMP DEFAULT NOW()
     )`);
 
+    // Migrations colonnes si elles n'existent pas encore
+    const migrations = [
+      `ALTER TABLE nc_internes ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES clients(id)`,
+      `ALTER TABLE nc_internes ADD COLUMN IF NOT EXISTS client_nom VARCHAR(150)`,
+      `ALTER TABLE nc_internes ADD COLUMN IF NOT EXISTS cout_interne NUMERIC(10,2)`,
+      `ALTER TABLE nc_internes ADD COLUMN IF NOT EXISTS montant_client NUMERIC(10,2)`,
+      `ALTER TABLE nc_externes ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES clients(id)`,
+      `ALTER TABLE nc_externes ADD COLUMN IF NOT EXISTS client_nom VARCHAR(150)`,
+      `ALTER TABLE nc_externes ADD COLUMN IF NOT EXISTS cout_interne NUMERIC(10,2)`,
+      `ALTER TABLE nc_temps ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES clients(id)`,
+      `ALTER TABLE nc_temps ADD COLUMN IF NOT EXISTS client_nom VARCHAR(150)`,
+      `ALTER TABLE nc_temps ADD COLUMN IF NOT EXISTS cout_interne NUMERIC(10,2)`,
+    ];
+    for (const m of migrations) {
+      try { await client.query(m); } catch(e) { /* colonne existe deja */ }
+    }
+
     await client.query('COMMIT');
 
+    // Admin par defaut
     const { rows } = await client.query("SELECT id FROM utilisateurs WHERE login='admin'");
     if (rows.length === 0) {
       const bcrypt = require('bcryptjs');
@@ -127,8 +174,59 @@ async function initDB() {
       console.log('[DB] Utilisateur admin cree');
     }
 
-    console.log('[DB] Base de donnees initialisee.');
+    // Parametres par defaut
+    const { rows: pRows } = await client.query("SELECT COUNT(*) FROM parametres");
+    if (parseInt(pRows[0].count) === 0) {
+      const defaults = [
+        ['operation', 'Préparation surface', 1],
+        ['operation', 'Accrochage', 2],
+        ['operation', 'Dégraissage', 3],
+        ['operation', 'Phosphatation', 4],
+        ['operation', 'Thermolaquage', 5],
+        ['operation', 'Cuisson', 6],
+        ['operation', 'Contrôle', 7],
+        ['operation', 'Décrochage', 8],
+        ['operation', 'Retouche', 9],
+        ['type_defaut', 'Couleur incorrecte', 1],
+        ['type_defaut', 'Aspect de surface', 2],
+        ['type_defaut', 'Épaisseur hors tolérance', 3],
+        ['type_defaut', 'Adhérence insuffisante', 4],
+        ['type_defaut', 'Bullage', 5],
+        ['type_defaut', 'Rayure', 6],
+        ['type_defaut', 'Coulure', 7],
+        ['type_defaut', 'Corps étranger', 8],
+        ['type_defaut', 'Autre', 9],
+        ['type_cause', 'Panne machine', 1],
+        ['type_cause', 'Qualité matière entrante', 2],
+        ['type_cause', 'Complexité pièce', 3],
+        ['type_cause', 'Manque effectif', 4],
+        ['type_cause', 'Erreur gamme', 5],
+        ['type_cause', 'Formation opérateur', 6],
+        ['type_cause', 'Autre', 7],
+        ['type_degradation', 'Panne électrique', 1],
+        ['type_degradation', 'Panne mécanique', 2],
+        ['type_degradation', 'Usure mécanique', 3],
+        ['type_degradation', 'Dégradation outillage', 4],
+        ['type_degradation', 'Choc / accident', 5],
+        ['type_degradation', 'Corrosion', 6],
+        ['type_degradation', 'Fuite hydraulique', 7],
+        ['type_degradation', 'Autre', 8],
+        ['decision', 'Avoir total', 1],
+        ['decision', 'Avoir partiel', 2],
+        ['decision', 'Reprise gratuite', 3],
+        ['decision', 'Remplacement', 4],
+        ['decision', 'Refus réclamation', 5],
+      ];
+      for (const [cat, val, ord] of defaults) {
+        await client.query(
+          "INSERT INTO parametres (categorie, valeur, ordre) VALUES ($1,$2,$3)",
+          [cat, val, ord]
+        );
+      }
+      console.log('[DB] Parametres par defaut inseres');
+    }
 
+    console.log('[DB] Base de donnees initialisee.');
   } catch (err) {
     await client.query('ROLLBACK');
     console.error('[DB] Erreur init:', err.message);
