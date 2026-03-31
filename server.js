@@ -198,7 +198,31 @@ app.delete('/api/parametres/:id', authMiddleware, managerOnly, async (req, res) 
   res.json({ success: true });
 });
 
-// ── NC INTERNES ───────────────────────────────────────────────────────────────
+// ── PARAMETRES LIENS (operation → causes) ────────────────────────────────────
+app.get('/api/parametres-liens', authMiddleware, async (req, res) => {
+  const { rows } = await pool.query('SELECT * FROM parametres_liens ORDER BY operation_valeur, cause_valeur');
+  res.json(rows);
+});
+
+app.post('/api/parametres-liens', authMiddleware, managerOnly, async (req, res) => {
+  const { operation_valeur, cause_valeur } = req.body;
+  if (!operation_valeur || !cause_valeur) return res.status(400).json({ error: 'Champs manquants' });
+  try {
+    const { rows } = await pool.query(
+      'INSERT INTO parametres_liens (operation_valeur, cause_valeur) VALUES ($1,$2) ON CONFLICT DO NOTHING RETURNING *',
+      [operation_valeur, cause_valeur]
+    );
+    res.json(rows[0] || { operation_valeur, cause_valeur });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.delete('/api/parametres-liens', authMiddleware, managerOnly, async (req, res) => {
+  const { operation_valeur, cause_valeur } = req.body;
+  await pool.query('DELETE FROM parametres_liens WHERE operation_valeur=$1 AND cause_valeur=$2', [operation_valeur, cause_valeur]);
+  res.json({ success: true });
+});
+
+
 app.get('/api/nc-internes', authMiddleware, async (req, res) => {
   const { statut, search } = req.query;
   let q = `SELECT n.*,u.nom||COALESCE(' '||u.prenom,'') AS created_by_nom FROM nc_internes n LEFT JOIN utilisateurs u ON n.created_by=u.id WHERE 1=1`;

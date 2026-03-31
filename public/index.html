@@ -386,7 +386,7 @@ td.mono{font-family:monospace;font-size:.82rem}
     </div>
     <div class="form-section"><div class="form-section-title">Défaut constaté</div>
       <div class="form-grid">
-        <div class="form-field"><label>Opération</label><div class="sel-add-wrap"><select id="nci-operation"><option value="">--</option></select><button class="btn-sel-add" id="btn-add-nci-operation" onclick="quickAdd('operation','nci-operation')" title="Ajouter une opération">+</button></div></div>
+        <div class="form-field"><label>Opération</label><div class="sel-add-wrap"><select id="nci-operation" onchange="filterCauses('nci',this.value)"><option value="">--</option></select><button class="btn-sel-add" id="btn-add-nci-operation" onclick="quickAdd('operation','nci-operation')" title="Ajouter une opération">+</button></div></div>
         <div class="form-field"><label>Type de défaut</label><div class="sel-add-wrap"><select id="nci-type_defaut"><option value="">--</option></select><button class="btn-sel-add" id="btn-add-nci-type_defaut" onclick="quickAdd('type_defaut','nci-type_defaut')" title="Ajouter un type de défaut">+</button></div></div>
         <div class="form-field"><label>Qté NC</label><input type="number" id="nci-qte_nc" min="0"></div>
         <div class="form-field"><label>Qté totale</label><input type="number" id="nci-qte_totale" min="0"></div>
@@ -435,7 +435,7 @@ td.mono{font-family:monospace;font-size:.82rem}
     </div>
     <div class="form-section"><div class="form-section-title">Défaut réclamé</div>
       <div class="form-grid">
-        <div class="form-field"><label>Type de défaut</label><div class="sel-add-wrap"><select id="nce-type_defaut"><option value="">--</option></select><button class="btn-sel-add" id="btn-add-nce-type_defaut" onclick="quickAdd('type_defaut','nce-type_defaut')" title="Ajouter un type de défaut">+</button></div></div>
+        <div class="form-field"><label>Type de défaut</label><div class="sel-add-wrap"><select id="nce-type_defaut" onchange="filterCauses('nce',this.value)"><option value="">--</option></select><button class="btn-sel-add" id="btn-add-nce-type_defaut" onclick="quickAdd('type_defaut','nce-type_defaut')" title="Ajouter un type de défaut">+</button></div></div>
         <div class="form-field"><label>Décision</label><select id="nce-decision"><option value="">--</option></select></div>
         <div class="form-field"><label>Qté réclamée</label><input type="number" id="nce-qte_reclamee" min="0"></div>
         <div class="form-field"><label>Qté livrée</label><input type="number" id="nce-qte_livree" min="0"></div>
@@ -677,24 +677,31 @@ function showPage(p){
 }
 
 // ── PARAMS ────────────────────────────────────────────────────────────────────
+let LIENS = []; // [{operation_valeur, cause_valeur}]
+
 async function loadParams(){
   try{
-    const data=await api('GET','/api/parametres');
+    const [data, liens] = await Promise.all([
+      api('GET','/api/parametres'),
+      api('GET','/api/parametres-liens')
+    ]);
     PARAMS={};
     data.forEach(p=>{
       if(!PARAMS[p.categorie])PARAMS[p.categorie]=[];
       PARAMS[p.categorie].push(p);
     });
+    LIENS = liens;
     fillParamSelects();
     fillRespSelects();
   }catch(e){console.error(e);}
 }
 
 function fillParamSelects(){
+  // Cause : ne pas remplir ici, géré par filterCauses() selon l'opération choisie
   const map={
-    'nci-operation':'operation','nci-type_defaut':'type_defaut','nci-cause':'cause',
-    'nce-type_defaut':'type_defaut','nce-decision':'decision','nce-cause_racine':'cause',
-    'nct-type_cause':'type_cause','nct-cause':'cause',
+    'nci-operation':'operation','nci-type_defaut':'type_defaut',
+    'nce-type_defaut':'type_defaut','nce-decision':'decision',
+    'nct-type_cause':'type_cause',
     'ncm-type_degradation':'type_degradation'
   };
   Object.entries(map).forEach(([selId,cat])=>{
@@ -707,6 +714,27 @@ function fillParamSelects(){
     sel.value=cur;
   });
 }
+
+// Filtre les causes selon l'opération sélectionnée (NCI et NCE)
+function filterCauses(formType, operationVal) {
+  const causeSelId = formType==='nci' ? 'nci-cause' : formType==='nce' ? 'nce-cause_racine' : null;
+  if (!causeSelId) return;
+  const sel = $(causeSelId);
+  if (!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">-- Choisir une opération d\'abord --</option>';
+  if (!operationVal) return;
+  const liensOp = LIENS.filter(l => l.operation_valeur === operationVal).map(l => l.cause_valeur);
+  if (!liensOp.length) {
+    sel.innerHTML = '<option value="">Aucune cause liée à cette opération</option>';
+    return;
+  }
+  (PARAMS['cause']||[]).filter(p => liensOp.includes(p.valeur)).forEach(p=>{
+    const o=document.createElement('option');o.value=p.valeur;o.textContent=p.valeur;sel.appendChild(o);
+  });
+  if (cur && liensOp.includes(cur)) sel.value = cur;
+}
+
 
 function fillRespSelects(){
   const ids=['nci-responsable','nce-responsable','nct-responsable'];
@@ -732,7 +760,9 @@ function loadParamsPage(){
     {key:'decision',label:'Décisions NC Externes'},
   ];
   const canEdit=['admin','manager'].includes(USER.role);
-  $('params-grid').innerHTML=cats.map(c=>`
+
+  // Bloc standard pour toutes les catégories sauf cause
+  const standardBlocks = cats.filter(c=>c.key!=='cause').map(c=>`
     <div class="param-block">
       <div class="param-block-title">${c.label}</div>
       <div id="param-list-${c.key}">
@@ -747,6 +777,55 @@ function loadParamsPage(){
         <button onclick="addParam('${c.key}')">+ Ajouter</button>
       </div>`:''}
     </div>`).join('');
+
+  // Bloc spécial pour les causes avec liaisons opérations
+  const operations = (PARAMS['operation']||[]).map(p=>p.valeur);
+  const causesBlock = `
+    <div class="param-block" style="grid-column:1/-1">
+      <div class="param-block-title" style="margin-bottom:16px">
+        Causes de NC
+        <span style="font-size:.72rem;color:var(--text2);font-weight:400;text-transform:none;margin-left:8px">Cochez les opérations liées à chaque cause</span>
+      </div>
+      ${(PARAMS['cause']||[]).length === 0 ? '<div style="color:var(--text2);font-size:.85rem">Aucune cause définie</div>' :
+        (PARAMS['cause']||[]).map(p=>{
+          const liensOp = LIENS.filter(l=>l.cause_valeur===p.valeur).map(l=>l.operation_valeur);
+          return `<div class="param-item" style="flex-direction:column;align-items:flex-start;padding:10px;margin-bottom:4px;border:0.5px solid var(--border);border-radius:8px">
+            <div style="display:flex;justify-content:space-between;width:100%;align-items:center;margin-bottom:8px">
+              <span style="font-weight:600">${p.valeur}</span>
+              ${canEdit?`<button class="btn-sm btn-del" onclick="delParam(${p.id},'cause')">✕</button>`:''}
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px">
+              ${operations.length===0?'<span style="font-size:.78rem;color:var(--text2)">Aucune opération définie</span>':
+                operations.map(op=>{
+                  const linked = liensOp.includes(op);
+                  return canEdit
+                    ? `<label style="display:flex;align-items:center;gap:5px;font-size:.8rem;cursor:pointer;padding:3px 8px;border-radius:6px;background:${linked?'rgba(79,142,247,.15)':'var(--bg3)'};border:1px solid ${linked?'var(--accent)':'var(--border)'};transition:all .15s">
+                        <input type="checkbox" ${linked?'checked':''} onchange="toggleLien('${p.valeur.replace(/'/g,"\\'")}','${op.replace(/'/g,"\\'")}',this.checked)" style="accent-color:var(--accent)">
+                        ${op}
+                      </label>`
+                    : linked ? `<span style="font-size:.78rem;padding:2px 8px;background:rgba(79,142,247,.15);color:var(--accent);border-radius:6px">${op}</span>` : '';
+                }).join('')}
+            </div>
+          </div>`;
+        }).join('')}
+      ${canEdit?`<div class="param-add" style="margin-top:12px">
+        <input type="text" id="param-input-cause" placeholder="Nouvelle cause…">
+        <button onclick="addParam('cause')">+ Ajouter</button>
+      </div>`:''}
+    </div>`;
+
+  $('params-grid').innerHTML = causesBlock + standardBlocks;
+}
+
+async function toggleLien(causeValeur, operationValeur, checked) {
+  try {
+    if (checked) {
+      await api('POST', '/api/parametres-liens', { operation_valeur: operationValeur, cause_valeur: causeValeur });
+    } else {
+      await api('DELETE', '/api/parametres-liens', { operation_valeur: operationValeur, cause_valeur: causeValeur });
+    }
+    LIENS = await api('GET', '/api/parametres-liens');
+  } catch(e) { toast(e.message, 'error'); loadParamsPage(); }
 }
 
 async function addParam(cat){
@@ -1013,6 +1092,15 @@ function clearForm(type){
 }
 
 function fillForm(type,rec){
+  // Pour NCI/NCE : d'abord remplir l'opération puis filtrer les causes
+  if(type==='nci'||type==='nce'){
+    const opField=type==='nci'?'operation':'type_defaut';
+    const opVal=rec[opField]||'';
+    // Remplir l'opération en premier
+    const opEl=$(`${type}-${opField}`);if(opEl)opEl.value=opVal;
+    // Déclencher le filtre des causes
+    filterCauses(type, opVal);
+  }
   FIELDS[type].forEach(f=>{
     const el=$(`${type}-${f}`);if(!el)return;
     let v=rec[f];if(v===null||v===undefined)v='';
