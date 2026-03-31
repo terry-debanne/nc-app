@@ -7,6 +7,9 @@ const { pool, initDB } = require('./database');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+console.log('[ENV] PORT:', process.env.PORT);
+console.log('[ENV] DATABASE_URL:', process.env.DATABASE_URL);
+console.log('[ENV] NODE_ENV:', process.env.NODE_ENV);
 const JWT_SECRET = process.env.JWT_SECRET || 'nc_ama_secret_2024';
 const SESSION_DURATION = '4h';
 
