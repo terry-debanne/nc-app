@@ -52,10 +52,7 @@ async function initDB() {
       UNIQUE(operation_valeur, cause_valeur)
     )`);
 
-    // Migration table liens
-    try { await client.query(`CREATE TABLE IF NOT EXISTS parametres_liens (id SERIAL PRIMARY KEY, operation_valeur VARCHAR(200) NOT NULL, cause_valeur VARCHAR(200) NOT NULL, UNIQUE(operation_valeur, cause_valeur))`); } catch(e) {}
-
-
+    await client.query(`CREATE TABLE IF NOT EXISTS nc_internes (
       id SERIAL PRIMARY KEY,
       numero VARCHAR(30) UNIQUE NOT NULL,
       date_detection DATE NOT NULL,
