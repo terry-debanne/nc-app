@@ -779,45 +779,97 @@ function loadParamsPage(){
     </div>`).join('');
 
   // Bloc spécial pour les causes avec liaisons opérations
+  // Interface : choisir l'opération d'abord, puis cocher les causes
   const operations = (PARAMS['operation']||[]).map(p=>p.valeur);
+  const firstOp = operations[0] || '';
   const causesBlock = `
     <div class="param-block" style="grid-column:1/-1">
       <div class="param-block-title" style="margin-bottom:16px">
-        Causes de NC
-        <span style="font-size:.72rem;color:var(--text2);font-weight:400;text-transform:none;margin-left:8px">Cochez les opérations liées à chaque cause</span>
+        Causes de NC par opération
+        <span style="font-size:.72rem;color:var(--text2);font-weight:400;text-transform:none;margin-left:8px">Sélectionnez une opération puis cochez les causes associées</span>
       </div>
-      ${(PARAMS['cause']||[]).length === 0 ? '<div style="color:var(--text2);font-size:.85rem">Aucune cause définie</div>' :
-        (PARAMS['cause']||[]).map(p=>{
-          const liensOp = LIENS.filter(l=>l.cause_valeur===p.valeur).map(l=>l.operation_valeur);
-          return `<div class="param-item" style="flex-direction:column;align-items:flex-start;padding:10px;margin-bottom:4px;border:0.5px solid var(--border);border-radius:8px">
-            <div style="display:flex;justify-content:space-between;width:100%;align-items:center;margin-bottom:8px">
-              <span style="font-weight:600">${p.valeur}</span>
-              ${canEdit?`<button class="btn-sm btn-del" onclick="delParam(${p.id},'cause')">✕</button>`:''}
-            </div>
-            <div style="display:flex;flex-wrap:wrap;gap:8px">
-              ${operations.length===0?'<span style="font-size:.78rem;color:var(--text2)">Aucune opération définie</span>':
-                operations.map(op=>{
-                  const linked = liensOp.includes(op);
-                  return canEdit
-                    ? `<label style="display:flex;align-items:center;gap:5px;font-size:.8rem;cursor:pointer;padding:3px 8px;border-radius:6px;background:${linked?'rgba(79,142,247,.15)':'var(--bg3)'};border:1px solid ${linked?'var(--accent)':'var(--border)'};transition:all .15s">
-                        <input type="checkbox" ${linked?'checked':''} onchange="toggleLien('${p.valeur.replace(/'/g,"\\'")}','${op.replace(/'/g,"\\'")}',this.checked)" style="accent-color:var(--accent)">
-                        ${op}
-                      </label>`
-                    : linked ? `<span style="font-size:.78rem;padding:2px 8px;background:rgba(79,142,247,.15);color:var(--accent);border-radius:6px">${op}</span>` : '';
+      <div style="display:grid;grid-template-columns:260px 1fr;gap:16px;min-height:200px">
+
+        <!-- Colonne gauche : liste des opérations -->
+        <div style="background:var(--bg3);border:0.5px solid var(--border);border-radius:8px;overflow:hidden">
+          <div style="padding:8px 12px;font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;border-bottom:0.5px solid var(--border)">Opérations</div>
+          ${operations.length===0
+            ? '<div style="padding:14px;font-size:.82rem;color:var(--text2)">Aucune opération définie</div>'
+            : operations.map((op,i)=>`
+              <div id="lien-op-${i}" onclick="selectOperation('${op.replace(/'/g,"\\'")}',${i})"
+                style="padding:9px 14px;cursor:pointer;font-size:.88rem;transition:background .12s;border-bottom:0.5px solid var(--border);${i===0?'background:var(--bg2);color:var(--text);border-left:3px solid var(--accent)':'border-left:3px solid transparent;color:var(--text2)'}">
+                ${op}
+              </div>`).join('')}
+        </div>
+
+        <!-- Colonne droite : causes à cocher pour l'opération sélectionnée -->
+        <div>
+          <div style="padding:8px 0 12px;font-size:.82rem;font-weight:600;color:var(--text)" id="lien-op-label">
+            ${firstOp ? 'Causes liées à : <span style="color:var(--accent)">' + firstOp + '</span>' : 'Sélectionnez une opération'}
+          </div>
+          <div id="lien-causes-list" style="display:flex;flex-direction:column;gap:6px">
+            ${(PARAMS['cause']||[]).length===0
+              ? '<div style="color:var(--text2);font-size:.83rem">Aucune cause définie — ajoutez-en ci-dessous</div>'
+              : (PARAMS['cause']||[]).map(p=>{
+                  const linked = firstOp ? LIENS.some(l=>l.operation_valeur===firstOp&&l.cause_valeur===p.valeur) : false;
+                  return `<label id="lien-cause-${p.id}" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;cursor:${canEdit?'pointer':'default'};background:${linked?'rgba(79,142,247,.1)':'var(--bg3)'};border:0.5px solid ${linked?'var(--accent)':'var(--border)'};transition:all .15s;font-size:.88rem">
+                    <input type="checkbox" ${linked?'checked':''} ${canEdit?'':'disabled'}
+                      onchange="toggleLien('${p.valeur.replace(/'/g,"\\'")}',document.getElementById('lien-op-current').value,this.checked,${p.id})"
+                      style="accent-color:var(--accent);width:16px;height:16px">
+                    <span>${p.valeur}</span>
+                    ${canEdit?`<button class="btn-sm btn-del" style="margin-left:auto" onclick="event.preventDefault();delParam(${p.id},'cause')">✕</button>`:''}
+                  </label>`;
                 }).join('')}
-            </div>
-          </div>`;
-        }).join('')}
-      ${canEdit?`<div class="param-add" style="margin-top:12px">
+          </div>
+          <input type="hidden" id="lien-op-current" value="${firstOp}">
+        </div>
+
+      </div>
+      ${canEdit?`<div class="param-add" style="margin-top:14px;padding-top:14px;border-top:0.5px solid var(--border)">
         <input type="text" id="param-input-cause" placeholder="Nouvelle cause…">
-        <button onclick="addParam('cause')">+ Ajouter</button>
+        <button onclick="addParam('cause')">+ Ajouter cause</button>
       </div>`:''}
     </div>`;
 
   $('params-grid').innerHTML = causesBlock + standardBlocks;
 }
 
-async function toggleLien(causeValeur, operationValeur, checked) {
+// Sélection d'une opération dans le panneau gauche → rafraîchit les causes à cocher
+function selectOperation(opValeur, idx) {
+  // Mettre à jour la valeur courante
+  const cur = document.getElementById('lien-op-current');
+  if (cur) cur.value = opValeur;
+  // Surbrillance dans la liste gauche
+  document.querySelectorAll('[id^="lien-op-"]').forEach((el,i) => {
+    if (el.id === 'lien-op-current') return;
+    const active = i === idx;
+    el.style.background = active ? 'var(--bg2)' : '';
+    el.style.color = active ? 'var(--text)' : 'var(--text2)';
+    el.style.borderLeft = active ? '3px solid var(--accent)' : '3px solid transparent';
+  });
+  // Mettre à jour le titre
+  const lbl = document.getElementById('lien-op-label');
+  if (lbl) lbl.innerHTML = `Causes liées à : <span style="color:var(--accent)">${opValeur}</span>`;
+  // Mettre à jour les checkboxes
+  const list = document.getElementById('lien-causes-list');
+  if (!list) return;
+  const canEdit = ['admin','manager'].includes(USER?.role);
+  const causes = PARAMS['cause'] || [];
+  if (!causes.length) { list.innerHTML = '<div style="color:var(--text2);font-size:.83rem">Aucune cause définie</div>'; return; }
+  list.innerHTML = causes.map(p => {
+    const linked = LIENS.some(l => l.operation_valeur === opValeur && l.cause_valeur === p.valeur);
+    return `<label id="lien-cause-${p.id}" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;cursor:${canEdit?'pointer':'default'};background:${linked?'rgba(79,142,247,.1)':'var(--bg3)'};border:0.5px solid ${linked?'var(--accent)':'var(--border)'};transition:all .15s;font-size:.88rem">
+      <input type="checkbox" ${linked?'checked':''} ${canEdit?'':'disabled'}
+        onchange="toggleLien('${p.valeur.replace(/'/g,"\\'")}',document.getElementById('lien-op-current').value,this.checked,${p.id})"
+        style="accent-color:var(--accent);width:16px;height:16px">
+      <span>${p.valeur}</span>
+      ${canEdit?`<button class="btn-sm btn-del" style="margin-left:auto" onclick="event.preventDefault();delParam(${p.id},'cause')">✕</button>`:''}
+    </label>`;
+  }).join('');
+}
+
+async function toggleLien(causeValeur, operationValeur, checked, causeParamId) {
+  if (!operationValeur) { toast('Sélectionnez une opération d\'abord', 'error'); return; }
   try {
     if (checked) {
       await api('POST', '/api/parametres-liens', { operation_valeur: operationValeur, cause_valeur: causeValeur });
@@ -825,7 +877,13 @@ async function toggleLien(causeValeur, operationValeur, checked) {
       await api('DELETE', '/api/parametres-liens', { operation_valeur: operationValeur, cause_valeur: causeValeur });
     }
     LIENS = await api('GET', '/api/parametres-liens');
-  } catch(e) { toast(e.message, 'error'); loadParamsPage(); }
+    // Mettre à jour le style du label sans re-render complet
+    const lbl = document.getElementById(`lien-cause-${causeParamId}`);
+    if (lbl) {
+      lbl.style.background = checked ? 'rgba(79,142,247,.1)' : 'var(--bg3)';
+      lbl.style.borderColor = checked ? 'var(--accent)' : 'var(--border)';
+    }
+  } catch(e) { toast(e.message, 'error'); }
 }
 
 async function addParam(cat){
