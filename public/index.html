@@ -456,7 +456,8 @@ td.mono{font-family:monospace;font-size:.82rem}
     </div>
     <div class="form-section"><div class="form-section-title">Défaut réclamé</div>
       <div class="form-grid">
-        <div class="form-field"><label>Type de défaut</label><div class="sel-add-wrap"><select id="nce-type_defaut" onchange="filterCauses('nce',this.value)"><option value="">--</option></select><button class="btn-sel-add" id="btn-add-nce-type_defaut" onclick="quickAdd('type_defaut','nce-type_defaut')" title="Ajouter un type de défaut">+</button></div></div>
+        <div class="form-field"><label>Opération concernée</label><div class="sel-add-wrap"><select id="nce-operation" onchange="filterCauses('nce',this.value)"><option value="">--</option></select><button class="btn-sel-add" id="btn-add-nce-operation" onclick="quickAdd('operation','nce-operation')" title="Ajouter une opération">+</button></div></div>
+        <div class="form-field"><label>Type de défaut</label><div class="sel-add-wrap"><select id="nce-type_defaut"><option value="">--</option></select><button class="btn-sel-add" id="btn-add-nce-type_defaut" onclick="quickAdd('type_defaut','nce-type_defaut')" title="Ajouter un type de défaut">+</button></div></div>
         <div class="form-field"><label>Décision</label><select id="nce-decision"><option value="">--</option></select></div>
         <div class="form-field"><label>Qté réclamée</label><input type="number" id="nce-qte_reclamee" min="0"></div>
         <div class="form-field"><label>Qté livrée</label><input type="number" id="nce-qte_livree" min="0"></div>
@@ -721,7 +722,7 @@ function fillParamSelects(){
   // Cause : ne pas remplir ici, géré par filterCauses() selon l'opération choisie
   const map={
     'nci-operation':'operation','nci-type_defaut':'type_defaut',
-    'nce-type_defaut':'type_defaut','nce-decision':'decision',
+    'nce-operation':'operation','nce-type_defaut':'type_defaut','nce-decision':'decision',
     'nct-type_cause':'type_cause',
     'ncm-type_degradation':'type_degradation'
   };
@@ -1274,7 +1275,7 @@ function closeModal(type){$(`modal-${type}`).classList.remove('open');}
 
 const FIELDS={
   nci:['date_detection','of_ref','designation_piece','operation','type_defaut','description','qte_nc','qte_totale','cout_interne','montant_client','cause','action_corrective','responsable','delai_cloture','statut'],
-  nce:['date_reclamation','date_livraison','numero_bl','contact_client','designation_piece','type_defaut','description','qte_reclamee','qte_livree','cout_interne','impact_financier','decision','cause_racine','action_corrective','responsable','delai_reponse','statut'],
+  nce:['date_reclamation','date_livraison','numero_bl','contact_client','designation_piece','operation','type_defaut','description','qte_reclamee','qte_livree','cout_interne','impact_financier','decision','cause_racine','action_corrective','responsable','delai_reponse','statut'],
   nct:['date_fabrication','of_ref','operation','temps_prevu','temps_reel','nbre_pieces','cout_interne','cause','type_cause','action_amelioration','responsable','statut'],
   ncm:['date_constat','of_operation','equipement','num_inventaire','type_degradation','description','gravite','origine','cout_pieces','cout_mo','cout_indisponibilite','action_realisee','type_intervention','prestataire','date_cloture','statut']
 };
@@ -1289,13 +1290,11 @@ function clearForm(type){
 }
 
 function fillForm(type,rec){
-  // Pour NCI/NCE : d'abord remplir l'opération puis filtrer les causes
+  // Pour NCI/NCE : remplir l'opération en premier, filtrer les causes, puis remplir la cause
   if(type==='nci'||type==='nce'){
-    const opField=type==='nci'?'operation':'type_defaut';
-    const opVal=rec[opField]||'';
-    // Remplir l'opération en premier
-    const opEl=$(`${type}-${opField}`);if(opEl)opEl.value=opVal;
-    // Déclencher le filtre des causes
+    const opVal = rec['operation'] || '';
+    const opEl = $(`${type}-operation`);
+    if(opEl) opEl.value = opVal;
     filterCauses(type, opVal);
   }
   FIELDS[type].forEach(f=>{

@@ -280,9 +280,9 @@ app.post('/api/nc-externes', authMiddleware, async (req, res) => {
   try {
     const numero = await genNumero('NCE', 'nc_externes');
     const { rows } = await pool.query(
-      `INSERT INTO nc_externes (numero,date_reclamation,date_livraison,numero_bl,client_id,client_nom,contact_client,designation_piece,type_defaut,description,qte_reclamee,qte_livree,cout_interne,impact_financier,decision,cause_racine,action_corrective,responsable,delai_reponse,statut,created_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21) RETURNING *`,
-      [numero,d.date_reclamation,d.date_livraison||null,d.numero_bl,d.client_id||null,d.client_nom,d.contact_client,d.designation_piece,d.type_defaut,d.description,d.qte_reclamee||null,d.qte_livree||null,d.cout_interne||null,d.impact_financier||null,d.decision,d.cause_racine,d.action_corrective,d.responsable,d.delai_reponse||null,d.statut||'En attente',req.user.id]
+      `INSERT INTO nc_externes (numero,date_reclamation,date_livraison,numero_bl,client_id,client_nom,contact_client,designation_piece,operation,type_defaut,description,qte_reclamee,qte_livree,cout_interne,impact_financier,decision,cause_racine,action_corrective,responsable,delai_reponse,statut,created_by)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22) RETURNING *`,
+      [numero,d.date_reclamation,d.date_livraison||null,d.numero_bl,d.client_id||null,d.client_nom,d.contact_client,d.designation_piece,d.operation,d.type_defaut,d.description,d.qte_reclamee||null,d.qte_livree||null,d.cout_interne||null,d.impact_financier||null,d.decision,d.cause_racine,d.action_corrective,d.responsable,d.delai_reponse||null,d.statut||'En attente',req.user.id]
     );
     res.json(rows[0]);
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -292,8 +292,8 @@ app.put('/api/nc-externes/:id', authMiddleware, managerOnly, async (req, res) =>
   const d = req.body;
   try {
     await pool.query(
-      `UPDATE nc_externes SET date_reclamation=$1,date_livraison=$2,numero_bl=$3,client_id=$4,client_nom=$5,contact_client=$6,designation_piece=$7,type_defaut=$8,description=$9,qte_reclamee=$10,qte_livree=$11,cout_interne=$12,impact_financier=$13,decision=$14,cause_racine=$15,action_corrective=$16,responsable=$17,delai_reponse=$18,statut=$19,updated_at=NOW() WHERE id=$20`,
-      [d.date_reclamation,d.date_livraison||null,d.numero_bl,d.client_id||null,d.client_nom,d.contact_client,d.designation_piece,d.type_defaut,d.description,d.qte_reclamee||null,d.qte_livree||null,d.cout_interne||null,d.impact_financier||null,d.decision,d.cause_racine,d.action_corrective,d.responsable,d.delai_reponse||null,d.statut,req.params.id]
+      `UPDATE nc_externes SET date_reclamation=$1,date_livraison=$2,numero_bl=$3,client_id=$4,client_nom=$5,contact_client=$6,designation_piece=$7,operation=$8,type_defaut=$9,description=$10,qte_reclamee=$11,qte_livree=$12,cout_interne=$13,impact_financier=$14,decision=$15,cause_racine=$16,action_corrective=$17,responsable=$18,delai_reponse=$19,statut=$20,updated_at=NOW() WHERE id=$21`,
+      [d.date_reclamation,d.date_livraison||null,d.numero_bl,d.client_id||null,d.client_nom,d.contact_client,d.designation_piece,d.operation,d.type_defaut,d.description,d.qte_reclamee||null,d.qte_livree||null,d.cout_interne||null,d.impact_financier||null,d.decision,d.cause_racine,d.action_corrective,d.responsable,d.delai_reponse||null,d.statut,req.params.id]
     );
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }

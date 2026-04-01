@@ -159,6 +159,7 @@ async function initDB() {
       `ALTER TABLE nc_externes ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES clients(id)`,
       `ALTER TABLE nc_externes ADD COLUMN IF NOT EXISTS client_nom VARCHAR(150)`,
       `ALTER TABLE nc_externes ADD COLUMN IF NOT EXISTS cout_interne NUMERIC(10,2)`,
+      `ALTER TABLE nc_externes ADD COLUMN IF NOT EXISTS operation VARCHAR(100)`,
       `ALTER TABLE nc_temps ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES clients(id)`,
       `ALTER TABLE nc_temps ADD COLUMN IF NOT EXISTS client_nom VARCHAR(150)`,
       `ALTER TABLE nc_temps ADD COLUMN IF NOT EXISTS cout_interne NUMERIC(10,2)`,
