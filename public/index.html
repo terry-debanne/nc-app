@@ -1511,17 +1511,20 @@ function openModal(type,id=null){
     const rec=allData[type]?.find(r=>r.id===id);
     if(rec){
       fillForm(type,rec);
-      // Afficher le numéro existant
       const nd=$(`${type}-numero-display`);if(nd&&rec.numero)nd.textContent=rec.numero;
     }
   }else{
     const today=new Date().toISOString().split('T')[0];
     const df=$(`${type}-date_detection`)||$(`${type}-date_reclamation`)||$(`${type}-date_fabrication`)||$(`${type}-date_constat`);
     if(df)df.value=today;
-    // Numéro provisoire basé sur l'année
-    const yr=new Date().getFullYear().toString().slice(-2);
-    const nd=$(`${type}-numero-display`);
-    if(nd)nd.textContent=`${type.toUpperCase()}-${yr}-XXXXX`;
+    // Charger le prochain numéro depuis le serveur
+    if(type==='nci'||type==='nce'){
+      const nd=$(`${type}-numero-display`);
+      if(nd){
+        nd.textContent='…';
+        api('GET',`/api/next-numero/${type}`).then(d=>{if(nd)nd.textContent=d.numero;}).catch(()=>{});
+      }
+    }
   }
   $(`modal-${type}`).classList.add('open');
 }

@@ -223,6 +223,17 @@ app.delete('/api/parametres-liens', authMiddleware, managerOnly, async (req, res
 });
 
 
+// ── PROCHAIN NUMÉRO ───────────────────────────────────────────────────────────
+app.get('/api/next-numero/:prefix', authMiddleware, async (req, res) => {
+  const prefixMap = { nci:['NCI','nc_internes'], nce:['NCE','nc_externes'], nct:['NCT','nc_temps'], ncm:['NCM','nc_materiel'] };
+  const p = prefixMap[req.params.prefix.toLowerCase()];
+  if (!p) return res.status(400).json({ error: 'Préfixe inconnu' });
+  try {
+    const numero = await genNumero(p[0], p[1]);
+    res.json({ numero });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 app.get('/api/nc-internes', authMiddleware, async (req, res) => {
   const { statut, search } = req.query;
   let q = `SELECT n.*,u.nom||COALESCE(' '||u.prenom,'') AS created_by_nom FROM nc_internes n LEFT JOIN utilisateurs u ON n.created_by=u.id WHERE 1=1`;
