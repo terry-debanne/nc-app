@@ -930,6 +930,7 @@ async function startApp(){
   }
   if(USER.role==='admin'){$('nav-admin').style.display='flex';}
   await loadParams();
+  await loadClients();
   updateQuickAddButtons();
   showPage('dashboard');
 }
