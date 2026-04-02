@@ -354,9 +354,18 @@ td.mono{font-family:monospace;font-size:.82rem}
         <button class="btn btn-add" id="btn-add-client" onclick="openModalClient()">＋ Nouveau client</button>
       </div>
       <div class="toolbar">
-        <input type="text" class="search-input" placeholder="Rechercher un client…" oninput="loadClients(this.value)">
+        <input type="text" class="search-input" placeholder="Rechercher nom, contact…" oninput="loadClients(this.value)">
+        <select class="filter-select" onchange="filterClientsType(this.value)">
+          <option value="">Tous types</option>
+          <option>Particulier</option><option>Métallier</option><option>Industriel</option><option>Résidence</option><option>Autre</option>
+        </select>
       </div>
-      <div class="clients-grid" id="clients-grid"></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Nom / Raison sociale</th><th>Type</th><th>Contact</th><th>Téléphone</th><th>Email</th><th>Actif</th><th>Actions</th></tr></thead>
+          <tbody id="clients-tbody"></tbody>
+        </table>
+      </div>
     </div>
 
     <!-- RAPPORT -->
@@ -1300,27 +1309,45 @@ function printRapport() {
 }
 
 // ── CLIENTS ───────────────────────────────────────────────────────────────────
+let clientsFiltered = [];
+let clientsTypeFilter = '';
+
 async function loadClients(search=''){
   try{
     let url='/api/clients';
     if(search)url+=`?search=${encodeURIComponent(search)}`;
     CLIENTS=await api('GET',url);
-    const grid=$('clients-grid');
-    const canEdit=['admin','manager'].includes(USER.role);
-    if(!CLIENTS.length){grid.innerHTML='<div style="color:var(--text2);grid-column:1/-1;text-align:center;padding:40px">Aucun client — cliquez "+ Nouveau client"</div>';return;}
-    grid.innerHTML=CLIENTS.map(c=>`
-      <div class="client-card">
-        <div class="cn">${c.nom}</div>
-        <div class="ct">${c.type_client||'—'}</div>
-        ${c.contact?`<div class="ci">Contact : <span>${c.contact}</span></div>`:''}
-        ${c.telephone?`<div class="ci">Tél : <span>${c.telephone}</span></div>`:''}
-        ${c.email?`<div class="ci">Email : <span>${c.email}</span></div>`:''}
-        <div style="display:flex;gap:8px;margin-top:10px">
-          <button class="btn btn-sm btn-view" onclick="showHisto(${c.id},'${c.nom.replace(/'/g,"\\'")}')">📋 Historique NC</button>
-          ${canEdit?`<button class="btn btn-sm btn-edit" onclick="openModalClient(${c.id})">✏️ Modifier</button>`:''}
-        </div>
-      </div>`).join('');
+    renderClientsTable();
   }catch(e){toast(e.message,'error');}
+}
+
+function filterClientsType(type){
+  clientsTypeFilter=type;
+  renderClientsTable();
+}
+
+function renderClientsTable(){
+  const canEdit=['admin','manager'].includes(USER?.role);
+  const tbody=$('clients-tbody');
+  if(!tbody)return;
+  let list=CLIENTS;
+  if(clientsTypeFilter)list=list.filter(c=>c.type_client===clientsTypeFilter);
+  if(!list.length){
+    tbody.innerHTML=`<tr class="empty-row"><td colspan="7">Aucun client — cliquez "+ Nouveau client"</td></tr>`;
+    return;
+  }
+  tbody.innerHTML=list.map(c=>`<tr>
+    <td style="font-weight:600">${c.nom}</td>
+    <td><span class="badge badge-cours" style="font-size:.72rem">${c.type_client||'—'}</span></td>
+    <td>${c.contact||'—'}</td>
+    <td>${c.telephone||'—'}</td>
+    <td>${c.email||'—'}</td>
+    <td style="text-align:center">${c.actif?'<span style="color:var(--ok)">✓</span>':'<span style="color:var(--text2)">✕</span>'}</td>
+    <td>
+      <button class="btn btn-sm btn-view" onclick="showHisto(${c.id},'${c.nom.replace(/'/g,"\\'")}')">📋</button>
+      ${canEdit?`<button class="btn btn-sm btn-edit" onclick="openModalClient(${c.id})">✏️</button>`:''}
+    </td>
+  </tr>`).join('');
 }
 
 function openModalClient(id=null){
