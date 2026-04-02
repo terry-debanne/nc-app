@@ -239,9 +239,9 @@ app.post('/api/nc-internes', authMiddleware, async (req, res) => {
   try {
     const numero = await genNumero('NCI', 'nc_internes');
     const { rows } = await pool.query(
-      `INSERT INTO nc_internes (numero,date_detection,of_ref,client_id,client_nom,designation_piece,operation,type_defaut,description,qte_nc,qte_totale,cout_interne,montant_client,cause,action_corrective,responsable,delai_cloture,statut,created_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19) RETURNING *`,
-      [numero,d.date_detection,d.of_ref,d.client_id||null,d.client_nom,d.designation_piece,d.operation,d.type_defaut,d.description,d.qte_nc||null,d.qte_totale||null,d.cout_interne||null,d.montant_client||null,d.cause,d.action_corrective,d.responsable,d.delai_cloture||null,d.statut||'En attente',req.user.id]
+      `INSERT INTO nc_internes (numero,date_detection,of_ref,num_cde_client,client_id,client_nom,designation_piece,operation,type_defaut,description,qte_nc,qte_totale,qte_refusee_inutilisable,qte_refusee_utilisable,qte_acceptee,cout_production,cout_matiere,cout_transport,cout_indirect,cout_interne,montant_client,cause,action_corrective,responsable,delai_cloture,statut,created_by)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27) RETURNING *`,
+      [numero,d.date_detection,d.of_ref,d.num_cde_client,d.client_id||null,d.client_nom,d.designation_piece,d.operation,d.type_defaut,d.description,d.qte_nc||null,d.qte_totale||null,d.qte_refusee_inutilisable||null,d.qte_refusee_utilisable||null,d.qte_acceptee||null,d.cout_production||0,d.cout_matiere||0,d.cout_transport||0,d.cout_indirect||0,d.cout_interne||null,d.montant_client||null,d.cause,d.action_corrective,d.responsable,d.delai_cloture||null,d.statut||'En attente',req.user.id]
     );
     res.json(rows[0]);
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -251,8 +251,8 @@ app.put('/api/nc-internes/:id', authMiddleware, managerOnly, async (req, res) =>
   const d = req.body;
   try {
     await pool.query(
-      `UPDATE nc_internes SET date_detection=$1,of_ref=$2,client_id=$3,client_nom=$4,designation_piece=$5,operation=$6,type_defaut=$7,description=$8,qte_nc=$9,qte_totale=$10,cout_interne=$11,montant_client=$12,cause=$13,action_corrective=$14,responsable=$15,delai_cloture=$16,statut=$17,updated_at=NOW() WHERE id=$18`,
-      [d.date_detection,d.of_ref,d.client_id||null,d.client_nom,d.designation_piece,d.operation,d.type_defaut,d.description,d.qte_nc||null,d.qte_totale||null,d.cout_interne||null,d.montant_client||null,d.cause,d.action_corrective,d.responsable,d.delai_cloture||null,d.statut,req.params.id]
+      `UPDATE nc_internes SET date_detection=$1,of_ref=$2,num_cde_client=$3,client_id=$4,client_nom=$5,designation_piece=$6,operation=$7,type_defaut=$8,description=$9,qte_nc=$10,qte_totale=$11,qte_refusee_inutilisable=$12,qte_refusee_utilisable=$13,qte_acceptee=$14,cout_production=$15,cout_matiere=$16,cout_transport=$17,cout_indirect=$18,cout_interne=$19,montant_client=$20,cause=$21,action_corrective=$22,responsable=$23,delai_cloture=$24,statut=$25,updated_at=NOW() WHERE id=$26`,
+      [d.date_detection,d.of_ref,d.num_cde_client,d.client_id||null,d.client_nom,d.designation_piece,d.operation,d.type_defaut,d.description,d.qte_nc||null,d.qte_totale||null,d.qte_refusee_inutilisable||null,d.qte_refusee_utilisable||null,d.qte_acceptee||null,d.cout_production||0,d.cout_matiere||0,d.cout_transport||0,d.cout_indirect||0,d.cout_interne||null,d.montant_client||null,d.cause,d.action_corrective,d.responsable,d.delai_cloture||null,d.statut,req.params.id]
     );
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -280,9 +280,9 @@ app.post('/api/nc-externes', authMiddleware, async (req, res) => {
   try {
     const numero = await genNumero('NCE', 'nc_externes');
     const { rows } = await pool.query(
-      `INSERT INTO nc_externes (numero,date_reclamation,date_livraison,numero_bl,client_id,client_nom,contact_client,designation_piece,operation,type_defaut,description,qte_reclamee,qte_livree,cout_interne,impact_financier,decision,cause_racine,action_corrective,responsable,delai_reponse,statut,created_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22) RETURNING *`,
-      [numero,d.date_reclamation,d.date_livraison||null,d.numero_bl,d.client_id||null,d.client_nom,d.contact_client,d.designation_piece,d.operation,d.type_defaut,d.description,d.qte_reclamee||null,d.qte_livree||null,d.cout_interne||null,d.impact_financier||null,d.decision,d.cause_racine,d.action_corrective,d.responsable,d.delai_reponse||null,d.statut||'En attente',req.user.id]
+      `INSERT INTO nc_externes (numero,date_reclamation,date_livraison,numero_bl,num_cde_client,client_id,client_nom,contact_client,designation_piece,operation,type_defaut,description,qte_reclamee,qte_livree,qte_refusee_inutilisable,qte_refusee_utilisable,qte_acceptee,cout_production,cout_matiere,cout_transport,cout_indirect,cout_interne,impact_financier,decision,cause_racine,action_corrective,responsable,delai_reponse,statut,created_by)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30) RETURNING *`,
+      [numero,d.date_reclamation,d.date_livraison||null,d.numero_bl,d.num_cde_client,d.client_id||null,d.client_nom,d.contact_client,d.designation_piece,d.operation,d.type_defaut,d.description,d.qte_reclamee||null,d.qte_livree||null,d.qte_refusee_inutilisable||null,d.qte_refusee_utilisable||null,d.qte_acceptee||null,d.cout_production||0,d.cout_matiere||0,d.cout_transport||0,d.cout_indirect||0,d.cout_interne||null,d.impact_financier||null,d.decision,d.cause_racine,d.action_corrective,d.responsable,d.delai_reponse||null,d.statut||'En attente',req.user.id]
     );
     res.json(rows[0]);
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -292,8 +292,8 @@ app.put('/api/nc-externes/:id', authMiddleware, managerOnly, async (req, res) =>
   const d = req.body;
   try {
     await pool.query(
-      `UPDATE nc_externes SET date_reclamation=$1,date_livraison=$2,numero_bl=$3,client_id=$4,client_nom=$5,contact_client=$6,designation_piece=$7,operation=$8,type_defaut=$9,description=$10,qte_reclamee=$11,qte_livree=$12,cout_interne=$13,impact_financier=$14,decision=$15,cause_racine=$16,action_corrective=$17,responsable=$18,delai_reponse=$19,statut=$20,updated_at=NOW() WHERE id=$21`,
-      [d.date_reclamation,d.date_livraison||null,d.numero_bl,d.client_id||null,d.client_nom,d.contact_client,d.designation_piece,d.operation,d.type_defaut,d.description,d.qte_reclamee||null,d.qte_livree||null,d.cout_interne||null,d.impact_financier||null,d.decision,d.cause_racine,d.action_corrective,d.responsable,d.delai_reponse||null,d.statut,req.params.id]
+      `UPDATE nc_externes SET date_reclamation=$1,date_livraison=$2,numero_bl=$3,num_cde_client=$4,client_id=$5,client_nom=$6,contact_client=$7,designation_piece=$8,operation=$9,type_defaut=$10,description=$11,qte_reclamee=$12,qte_livree=$13,qte_refusee_inutilisable=$14,qte_refusee_utilisable=$15,qte_acceptee=$16,cout_production=$17,cout_matiere=$18,cout_transport=$19,cout_indirect=$20,cout_interne=$21,impact_financier=$22,decision=$23,cause_racine=$24,action_corrective=$25,responsable=$26,delai_reponse=$27,statut=$28,updated_at=NOW() WHERE id=$29`,
+      [d.date_reclamation,d.date_livraison||null,d.numero_bl,d.num_cde_client,d.client_id||null,d.client_nom,d.contact_client,d.designation_piece,d.operation,d.type_defaut,d.description,d.qte_reclamee||null,d.qte_livree||null,d.qte_refusee_inutilisable||null,d.qte_refusee_utilisable||null,d.qte_acceptee||null,d.cout_production||0,d.cout_matiere||0,d.cout_transport||0,d.cout_indirect||0,d.cout_interne||null,d.impact_financier||null,d.decision,d.cause_racine,d.action_corrective,d.responsable,d.delai_reponse||null,d.statut,req.params.id]
     );
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }

@@ -388,97 +388,346 @@ td.mono{font-family:monospace;font-size:.82rem}
 
 <!-- MODAL NCI -->
 <div class="modal-overlay" id="modal-nci">
-<div class="modal">
-  <div class="modal-header"><div class="modal-title" id="modal-nci-title">Nouvelle NCI</div><button class="btn-close" onclick="closeModal('nci')">✕</button></div>
-  <div class="modal-body">
-    <div class="form-section"><div class="form-section-title">Identification</div>
-      <div class="form-grid">
-        <div class="form-field"><label>Date détection <span class="req">*</span></label><input type="date" id="nci-date_detection"></div>
-        <div class="form-field"><label>OF / Réf. chantier</label><input type="text" id="nci-of_ref"></div>
-        <div class="form-field"><label>Client</label>
-          <div class="client-select-wrap">
-            <input type="text" id="nci-client_search" placeholder="Rechercher un client…" autocomplete="off" oninput="searchClient('nci',this.value)" onfocus="searchClient('nci',this.value)">
-            <div class="client-dropdown" id="nci-client_dropdown" style="display:none"></div>
-            <input type="hidden" id="nci-client_id"><input type="hidden" id="nci-client_nom">
+<div class="modal" style="width:780px">
+  <div class="modal-header" style="padding:12px 18px">
+    <button class="btn-close" onclick="closeModal('nci')" style="order:3">✕</button>
+  </div>
+  <div class="modal-body" style="padding:16px 18px">
+
+    <!-- LIGNE 1 : N° NC | Statut | Date -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px;align-items:end">
+      <div>
+        <div style="font-size:.7rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">N° NC</div>
+        <div id="nci-numero-display" style="font-size:1.1rem;font-weight:700;color:var(--nci);font-family:monospace;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px">NCI-26-00001</div>
+      </div>
+      <div>
+        <div style="font-size:.7rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Statut</div>
+        <select id="nci-statut" style="width:100%;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.88rem;outline:none">
+          <option>En attente</option><option>En cours</option><option>Clôturé</option><option>Annulé</option>
+        </select>
+      </div>
+      <div>
+        <div style="font-size:.7rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Date de détection <span style="color:var(--danger)">*</span></div>
+        <input type="date" id="nci-date_detection" style="width:100%;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.88rem;outline:none">
+      </div>
+    </div>
+
+    <!-- LIGNE 2 : Client | N° CDE société / N° CDE client -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:0">
+      <div>
+        <div style="font-size:.7rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Client</div>
+        <div class="client-select-wrap">
+          <input type="text" id="nci-client_search" placeholder="Rechercher un client…" autocomplete="off" oninput="searchClient('nci',this.value)" onfocus="searchClient('nci',this.value)" style="width:100%;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.88rem;outline:none">
+          <div class="client-dropdown" id="nci-client_dropdown" style="display:none"></div>
+          <input type="hidden" id="nci-client_id"><input type="hidden" id="nci-client_nom">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div>
+          <div style="font-size:.7rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">N° CDE société</div>
+          <input type="text" id="nci-of_ref" style="width:100%;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.88rem;outline:none">
+        </div>
+        <div>
+          <div style="font-size:.7rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">N° CDE client</div>
+          <input type="text" id="nci-num_cde_client" style="width:100%;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.88rem;outline:none">
+        </div>
+      </div>
+    </div>
+
+    <div style="border-top:1px dashed var(--border);margin:12px 0"></div>
+
+    <!-- LIGNE 3 : Réf pièce | Qté CDE | Qté NC -->
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;margin-bottom:0">
+      <div>
+        <div style="font-size:.7rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Référence pièce</div>
+        <input type="text" id="nci-designation_piece" style="width:100%;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.88rem;outline:none">
+      </div>
+      <div>
+        <div style="font-size:.7rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Qté CDE</div>
+        <input type="number" id="nci-qte_totale" min="0" style="width:100%;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.88rem;outline:none">
+      </div>
+      <div>
+        <div style="font-size:.7rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Qté NC</div>
+        <input type="number" id="nci-qte_nc" min="0" style="width:100%;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.88rem;outline:none">
+      </div>
+    </div>
+
+    <!-- Qté détail -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px;margin-bottom:0">
+      <div>
+        <div style="font-size:.7rem;color:var(--danger);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Refusées / Inutilisables</div>
+        <input type="number" id="nci-qte_refusee_inutilisable" min="0" style="width:100%;padding:7px 10px;background:var(--bg3);border:1px solid rgba(239,68,68,.3);border-radius:7px;color:var(--text);font-size:.88rem;outline:none">
+      </div>
+      <div>
+        <div style="font-size:.7rem;color:var(--warn);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Refusées / Utilisables</div>
+        <input type="number" id="nci-qte_refusee_utilisable" min="0" style="width:100%;padding:7px 10px;background:var(--bg3);border:1px solid rgba(245,158,11,.3);border-radius:7px;color:var(--text);font-size:.88rem;outline:none">
+      </div>
+      <div>
+        <div style="font-size:.7rem;color:var(--ok);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Acceptées</div>
+        <input type="number" id="nci-qte_acceptee" min="0" style="width:100%;padding:7px 10px;background:var(--bg3);border:1px solid rgba(16,185,129,.3);border-radius:7px;color:var(--text);font-size:.88rem;outline:none">
+      </div>
+    </div>
+
+    <div style="border-top:1px dashed var(--border);margin:12px 0"></div>
+
+    <!-- DESCRIPTION -->
+    <div style="border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px">
+      <div style="font-size:.78rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px">Description</div>
+      <textarea id="nci-description" rows="3" style="width:100%;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.88rem;outline:none;resize:vertical;font-family:inherit"></textarea>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px">
+        <div>
+          <div style="font-size:.7rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Opération</div>
+          <div class="sel-add-wrap">
+            <select id="nci-operation" onchange="filterCauses('nci',this.value)" style="flex:1;padding:7px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.85rem;outline:none"><option value="">--</option></select>
+            <button class="btn-sel-add" id="btn-add-nci-operation" onclick="quickAdd('operation','nci-operation')" title="Ajouter">+</button>
           </div>
         </div>
-        <div class="form-field"><label>Désignation pièce</label><input type="text" id="nci-designation_piece"></div>
+        <div>
+          <div style="font-size:.7rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Type de défaut</div>
+          <div class="sel-add-wrap">
+            <select id="nci-type_defaut" style="flex:1;padding:7px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.85rem;outline:none"><option value="">--</option></select>
+            <button class="btn-sel-add" id="btn-add-nci-type_defaut" onclick="quickAdd('type_defaut','nci-type_defaut')" title="Ajouter">+</button>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:.7rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Responsable opération</div>
+          <div class="sel-add-wrap">
+            <select id="nci-responsable" style="flex:1;padding:7px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.85rem;outline:none"><option value="">--</option></select>
+            <button class="btn-sel-add" id="btn-add-nci-responsable" onclick="quickAdd('responsable','nci-responsable')" title="Ajouter">+</button>
+          </div>
+        </div>
       </div>
     </div>
-    <div class="form-section"><div class="form-section-title">Défaut constaté</div>
-      <div class="form-grid">
-        <div class="form-field"><label>Opération</label><div class="sel-add-wrap"><select id="nci-operation" onchange="filterCauses('nci',this.value)"><option value="">--</option></select><button class="btn-sel-add" id="btn-add-nci-operation" onclick="quickAdd('operation','nci-operation')" title="Ajouter une opération">+</button></div></div>
-        <div class="form-field"><label>Type de défaut</label><div class="sel-add-wrap"><select id="nci-type_defaut"><option value="">--</option></select><button class="btn-sel-add" id="btn-add-nci-type_defaut" onclick="quickAdd('type_defaut','nci-type_defaut')" title="Ajouter un type de défaut">+</button></div></div>
-        <div class="form-field"><label>Qté NC</label><input type="number" id="nci-qte_nc" min="0"></div>
-        <div class="form-field"><label>Qté totale</label><input type="number" id="nci-qte_totale" min="0"></div>
-        <div class="form-field span-2"><label>Description</label><textarea id="nci-description"></textarea></div>
+
+    <!-- TRAITEMENT -->
+    <div style="border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="font-size:.78rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.6px">Traitement</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="font-size:.7rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.4px">Délai de traitement</div>
+          <input type="date" id="nci-delai_cloture" style="padding:5px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:.82rem;outline:none">
+        </div>
+      </div>
+      <div style="margin-bottom:8px">
+        <div style="font-size:.7rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Cause identifiée</div>
+        <div class="sel-add-wrap">
+          <select id="nci-cause" style="flex:1;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.88rem;outline:none"><option value="">-- Choisir une opération d'abord --</option></select>
+          <button class="btn-sel-add" id="btn-add-nci-cause" onclick="quickAdd('cause','nci-cause')" title="Ajouter">+</button>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:.7rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Action corrective</div>
+        <textarea id="nci-action_corrective" rows="2" style="width:100%;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.88rem;outline:none;resize:vertical;font-family:inherit"></textarea>
       </div>
     </div>
-    <div class="form-section"><div class="form-section-title">Coûts</div>
-      <div class="prix-row">
-        <div class="prix-box"><div class="px-label">💰 Coût interne (retraitement MO + matière)</div><input type="number" id="nci-cout_interne" min="0" step="0.01" placeholder="0.00 €" style="width:100%;margin-top:4px;padding:9px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.88rem;outline:none"></div>
-        <div class="prix-box"><div class="px-label">🧾 Montant client (avoir / facture)</div><input type="number" id="nci-montant_client" min="0" step="0.01" placeholder="0.00 €" style="width:100%;margin-top:4px;padding:9px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.88rem;outline:none"></div>
+
+    <!-- COÛTS -->
+    <div style="border:1px solid var(--border);border-radius:8px;padding:12px">
+      <div style="font-size:.78rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px">Coûts (€ HT)</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+        <div>
+          <div style="font-size:.68rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Coût production</div>
+          <input type="number" id="nci-cout_production" min="0" step="0.01" value="0" oninput="calcCoutsNC('nci')" style="width:100%;padding:7px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.88rem;outline:none">
+        </div>
+        <div>
+          <div style="font-size:.68rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Coût matière</div>
+          <input type="number" id="nci-cout_matiere" min="0" step="0.01" value="0" oninput="calcCoutsNC('nci')" style="width:100%;padding:7px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.88rem;outline:none">
+        </div>
+        <div>
+          <div style="font-size:.68rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Coût transport</div>
+          <input type="number" id="nci-cout_transport" min="0" step="0.01" value="0" oninput="calcCoutsNC('nci')" style="width:100%;padding:7px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.88rem;outline:none">
+        </div>
+        <div>
+          <div style="font-size:.68rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Coût indirect</div>
+          <input type="number" id="nci-cout_indirect" min="0" step="0.01" value="0" oninput="calcCoutsNC('nci')" style="width:100%;padding:7px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.88rem;outline:none">
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;background:var(--bg3);border:1px solid var(--accent);border-radius:8px;padding:10px 14px">
+        <div style="font-size:.85rem;font-weight:600;color:var(--text2)">💰 Coût total NC <span style="font-size:.72rem;color:var(--text2)">(min. 50,00 €)</span></div>
+        <div id="nci-cout-total-display" style="font-size:1.2rem;font-weight:700;color:var(--accent)">50,00 €</div>
+        <input type="hidden" id="nci-cout_interne">
+      </div>
+      <div style="margin-top:10px">
+        <div style="font-size:.68rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">🧾 Montant client (avoir / facture)</div>
+        <input type="number" id="nci-montant_client" min="0" step="0.01" placeholder="0.00 €" style="width:100%;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.88rem;outline:none">
       </div>
     </div>
-    <div class="form-section"><div class="form-section-title">Traitement</div>
-      <div class="form-grid">
-        <div class="form-field span-2"><label>Cause identifiée</label><div class="sel-add-wrap"><select id="nci-cause"><option value="">--</option></select><button class="btn-sel-add" id="btn-add-nci-cause" onclick="quickAdd('cause','nci-cause')" title="Ajouter une cause">+</button></div></div>
-        <div class="form-field span-2"><label>Action corrective</label><textarea id="nci-action_corrective"></textarea></div>
-        <div class="form-field"><label>Responsable</label><div class="sel-add-wrap"><select id="nci-responsable"><option value="">--</option></select><button class="btn-sel-add" id="btn-add-nci-responsable" onclick="quickAdd('responsable','nci-responsable')" title="Ajouter un responsable">+</button></div></div>
-        <div class="form-field"><label>Délai clôture</label><input type="date" id="nci-delai_cloture"></div>
-        <div class="form-field"><label>Statut</label><select id="nci-statut"><option>En attente</option><option>En cours</option><option>Clôturé</option><option>Annulé</option></select></div>
-      </div>
-    </div>
+
   </div>
   <div class="modal-footer"><button class="btn-cancel" onclick="closeModal('nci')">Annuler</button><button class="btn-save" onclick="saveNC('nci')">Enregistrer</button></div>
 </div></div>
 
 <!-- MODAL NCE -->
 <div class="modal-overlay" id="modal-nce">
-<div class="modal wide">
-  <div class="modal-header"><div class="modal-title" id="modal-nce-title">Nouvelle NCE</div><button class="btn-close" onclick="closeModal('nce')">✕</button></div>
-  <div class="modal-body">
-    <div class="form-section"><div class="form-section-title">Identification réclamation</div>
-      <div class="form-grid cols-3">
-        <div class="form-field"><label>Date réclamation <span class="req">*</span></label><input type="date" id="nce-date_reclamation"></div>
-        <div class="form-field"><label>Date livraison</label><input type="date" id="nce-date_livraison"></div>
-        <div class="form-field"><label>N° BL / OF</label><input type="text" id="nce-numero_bl"></div>
-        <div class="form-field span-2"><label>Client <span class="req">*</span></label>
-          <div class="client-select-wrap">
-            <input type="text" id="nce-client_search" placeholder="Rechercher un client…" autocomplete="off" oninput="searchClient('nce',this.value)" onfocus="searchClient('nce',this.value)">
-            <div class="client-dropdown" id="nce-client_dropdown" style="display:none"></div>
-            <input type="hidden" id="nce-client_id"><input type="hidden" id="nce-client_nom">
+<div class="modal" style="width:780px">
+  <div class="modal-header" style="padding:12px 18px">
+    <button class="btn-close" onclick="closeModal('nce')" style="order:3">✕</button>
+  </div>
+  <div class="modal-body" style="padding:16px 18px">
+
+    <!-- LIGNE 1 : N° NC | Statut | Date -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px;align-items:end">
+      <div>
+        <div style="font-size:.7rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">N° NC</div>
+        <div id="nce-numero-display" style="font-size:1.1rem;font-weight:700;color:var(--nce);font-family:monospace;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px">NCE-26-00001</div>
+      </div>
+      <div>
+        <div style="font-size:.7rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Statut</div>
+        <select id="nce-statut" style="width:100%;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.88rem;outline:none">
+          <option>En attente</option><option>En cours</option><option>Clôturé</option><option>Litige</option>
+        </select>
+      </div>
+      <div>
+        <div style="font-size:.7rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Date de détection <span style="color:var(--danger)">*</span></div>
+        <input type="date" id="nce-date_reclamation" style="width:100%;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.88rem;outline:none">
+      </div>
+    </div>
+
+    <!-- LIGNE 2 : Client | N° CDE société / N° CDE client -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:0">
+      <div>
+        <div style="font-size:.7rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Client <span style="color:var(--danger)">*</span></div>
+        <div class="client-select-wrap">
+          <input type="text" id="nce-client_search" placeholder="Rechercher un client…" autocomplete="off" oninput="searchClient('nce',this.value)" onfocus="searchClient('nce',this.value)" style="width:100%;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.88rem;outline:none">
+          <div class="client-dropdown" id="nce-client_dropdown" style="display:none"></div>
+          <input type="hidden" id="nce-client_id"><input type="hidden" id="nce-client_nom">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div>
+          <div style="font-size:.7rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">N° CDE société</div>
+          <input type="text" id="nce-numero_bl" style="width:100%;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.88rem;outline:none">
+        </div>
+        <div>
+          <div style="font-size:.7rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">N° CDE client</div>
+          <input type="text" id="nce-contact_client" style="width:100%;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.88rem;outline:none">
+        </div>
+      </div>
+    </div>
+
+    <div style="border-top:1px dashed var(--border);margin:12px 0"></div>
+
+    <!-- LIGNE 3 : Réf pièce | Qté CDE | Qté NC -->
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px">
+      <div>
+        <div style="font-size:.7rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Référence pièce</div>
+        <input type="text" id="nce-designation_piece" style="width:100%;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.88rem;outline:none">
+      </div>
+      <div>
+        <div style="font-size:.7rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Qté CDE</div>
+        <input type="number" id="nce-qte_livree" min="0" style="width:100%;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.88rem;outline:none">
+      </div>
+      <div>
+        <div style="font-size:.7rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Qté NC</div>
+        <input type="number" id="nce-qte_reclamee" min="0" style="width:100%;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.88rem;outline:none">
+      </div>
+    </div>
+
+    <!-- Qté détail -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">
+      <div>
+        <div style="font-size:.7rem;color:var(--danger);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Refusées / Inutilisables</div>
+        <input type="number" id="nce-qte_refusee_inutilisable" min="0" style="width:100%;padding:7px 10px;background:var(--bg3);border:1px solid rgba(239,68,68,.3);border-radius:7px;color:var(--text);font-size:.88rem;outline:none">
+      </div>
+      <div>
+        <div style="font-size:.7rem;color:var(--warn);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Refusées / Utilisables</div>
+        <input type="number" id="nce-qte_refusee_utilisable" min="0" style="width:100%;padding:7px 10px;background:var(--bg3);border:1px solid rgba(245,158,11,.3);border-radius:7px;color:var(--text);font-size:.88rem;outline:none">
+      </div>
+      <div>
+        <div style="font-size:.7rem;color:var(--ok);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Acceptées</div>
+        <input type="number" id="nce-qte_acceptee" min="0" style="width:100%;padding:7px 10px;background:var(--bg3);border:1px solid rgba(16,185,129,.3);border-radius:7px;color:var(--text);font-size:.88rem;outline:none">
+      </div>
+    </div>
+
+    <div style="border-top:1px dashed var(--border);margin:12px 0"></div>
+
+    <!-- DESCRIPTION -->
+    <div style="border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px">
+      <div style="font-size:.78rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px">Description</div>
+      <textarea id="nce-description" rows="3" style="width:100%;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.88rem;outline:none;resize:vertical;font-family:inherit"></textarea>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px">
+        <div>
+          <div style="font-size:.7rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Opération</div>
+          <div class="sel-add-wrap">
+            <select id="nce-operation" onchange="filterCauses('nce',this.value)" style="flex:1;padding:7px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.85rem;outline:none"><option value="">--</option></select>
+            <button class="btn-sel-add" id="btn-add-nce-operation" onclick="quickAdd('operation','nce-operation')" title="Ajouter">+</button>
           </div>
         </div>
-        <div class="form-field"><label>Contact client</label><input type="text" id="nce-contact_client"></div>
-        <div class="form-field span-3"><label>Désignation pièce</label><input type="text" id="nce-designation_piece"></div>
+        <div>
+          <div style="font-size:.7rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Type de défaut</div>
+          <div class="sel-add-wrap">
+            <select id="nce-type_defaut" style="flex:1;padding:7px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.85rem;outline:none"><option value="">--</option></select>
+            <button class="btn-sel-add" id="btn-add-nce-type_defaut" onclick="quickAdd('type_defaut','nce-type_defaut')" title="Ajouter">+</button>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:.7rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Responsable opération</div>
+          <div class="sel-add-wrap">
+            <select id="nce-responsable" style="flex:1;padding:7px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.85rem;outline:none"><option value="">--</option></select>
+            <button class="btn-sel-add" id="btn-add-nce-responsable" onclick="quickAdd('responsable','nce-responsable')" title="Ajouter">+</button>
+          </div>
+        </div>
       </div>
     </div>
-    <div class="form-section"><div class="form-section-title">Défaut réclamé</div>
-      <div class="form-grid">
-        <div class="form-field"><label>Opération concernée</label><div class="sel-add-wrap"><select id="nce-operation" onchange="filterCauses('nce',this.value)"><option value="">--</option></select><button class="btn-sel-add" id="btn-add-nce-operation" onclick="quickAdd('operation','nce-operation')" title="Ajouter une opération">+</button></div></div>
-        <div class="form-field"><label>Type de défaut</label><div class="sel-add-wrap"><select id="nce-type_defaut"><option value="">--</option></select><button class="btn-sel-add" id="btn-add-nce-type_defaut" onclick="quickAdd('type_defaut','nce-type_defaut')" title="Ajouter un type de défaut">+</button></div></div>
-        <div class="form-field"><label>Décision</label><select id="nce-decision"><option value="">--</option></select></div>
-        <div class="form-field"><label>Qté réclamée</label><input type="number" id="nce-qte_reclamee" min="0"></div>
-        <div class="form-field"><label>Qté livrée</label><input type="number" id="nce-qte_livree" min="0"></div>
-        <div class="form-field span-2"><label>Description réclamation</label><textarea id="nce-description"></textarea></div>
+
+    <!-- TRAITEMENT -->
+    <div style="border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="font-size:.78rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.6px">Traitement</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="font-size:.7rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.4px">Délai de traitement</div>
+          <input type="date" id="nce-delai_reponse" style="padding:5px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:.82rem;outline:none">
+        </div>
+      </div>
+      <div style="margin-bottom:8px">
+        <div style="font-size:.7rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Cause racine</div>
+        <div class="sel-add-wrap">
+          <select id="nce-cause_racine" style="flex:1;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.88rem;outline:none"><option value="">-- Choisir une opération d'abord --</option></select>
+          <button class="btn-sel-add" id="btn-add-nce-cause_racine" onclick="quickAdd('cause','nce-cause_racine')" title="Ajouter">+</button>
+        </div>
+      </div>
+      <div style="margin-bottom:8px">
+        <div style="font-size:.7rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Décision</div>
+        <select id="nce-decision" style="width:100%;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.88rem;outline:none"><option value="">--</option></select>
+      </div>
+      <div>
+        <div style="font-size:.7rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Action corrective</div>
+        <textarea id="nce-action_corrective" rows="2" style="width:100%;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.88rem;outline:none;resize:vertical;font-family:inherit"></textarea>
       </div>
     </div>
-    <div class="form-section"><div class="form-section-title">Coûts</div>
-      <div class="prix-row">
-        <div class="prix-box"><div class="px-label">💰 Coût interne (retraitement)</div><input type="number" id="nce-cout_interne" min="0" step="0.01" placeholder="0.00 €" style="width:100%;margin-top:4px;padding:9px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.88rem;outline:none"></div>
-        <div class="prix-box"><div class="px-label">🧾 Impact financier client (avoir / remise)</div><input type="number" id="nce-impact_financier" min="0" step="0.01" placeholder="0.00 €" style="width:100%;margin-top:4px;padding:9px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.88rem;outline:none"></div>
+
+    <!-- COÛTS -->
+    <div style="border:1px solid var(--border);border-radius:8px;padding:12px">
+      <div style="font-size:.78rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px">Coûts (€ HT)</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+        <div>
+          <div style="font-size:.68rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Coût production</div>
+          <input type="number" id="nce-cout_production" min="0" step="0.01" value="0" oninput="calcCoutsNC('nce')" style="width:100%;padding:7px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.88rem;outline:none">
+        </div>
+        <div>
+          <div style="font-size:.68rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Coût matière</div>
+          <input type="number" id="nce-cout_matiere" min="0" step="0.01" value="0" oninput="calcCoutsNC('nce')" style="width:100%;padding:7px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.88rem;outline:none">
+        </div>
+        <div>
+          <div style="font-size:.68rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Coût transport</div>
+          <input type="number" id="nce-cout_transport" min="0" step="0.01" value="0" oninput="calcCoutsNC('nce')" style="width:100%;padding:7px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.88rem;outline:none">
+        </div>
+        <div>
+          <div style="font-size:.68rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Coût indirect</div>
+          <input type="number" id="nce-cout_indirect" min="0" step="0.01" value="0" oninput="calcCoutsNC('nce')" style="width:100%;padding:7px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.88rem;outline:none">
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;background:var(--bg3);border:1px solid var(--accent);border-radius:8px;padding:10px 14px">
+        <div style="font-size:.85rem;font-weight:600;color:var(--text2)">💰 Coût total NC <span style="font-size:.72rem;color:var(--text2)">(min. 50,00 €)</span></div>
+        <div id="nce-cout-total-display" style="font-size:1.2rem;font-weight:700;color:var(--accent)">50,00 €</div>
+        <input type="hidden" id="nce-cout_interne">
+      </div>
+      <div style="margin-top:10px">
+        <div style="font-size:.68rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">🧾 Impact financier client (avoir / remise)</div>
+        <input type="number" id="nce-impact_financier" min="0" step="0.01" placeholder="0.00 €" style="width:100%;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.88rem;outline:none">
       </div>
     </div>
-    <div class="form-section"><div class="form-section-title">Traitement</div>
-      <div class="form-grid">
-        <div class="form-field span-2"><label>Cause racine</label><div class="sel-add-wrap"><select id="nce-cause_racine"><option value="">--</option></select><button class="btn-sel-add" id="btn-add-nce-cause_racine" onclick="quickAdd('cause','nce-cause_racine')" title="Ajouter une cause">+</button></div></div>
-        <div class="form-field span-2"><label>Action corrective</label><textarea id="nce-action_corrective"></textarea></div>
-        <div class="form-field"><label>Responsable</label><div class="sel-add-wrap"><select id="nce-responsable"><option value="">--</option></select><button class="btn-sel-add" id="btn-add-nce-responsable" onclick="quickAdd('responsable','nce-responsable')" title="Ajouter un responsable">+</button></div></div>
-        <div class="form-field"><label>Délai réponse</label><input type="date" id="nce-delai_reponse"></div>
-        <div class="form-field"><label>Statut</label><select id="nce-statut"><option>En attente</option><option>En cours</option><option>Clôturé</option><option>Litige</option></select></div>
-      </div>
-    </div>
+
   </div>
   <div class="modal-footer"><button class="btn-cancel" onclick="closeModal('nce')">Annuler</button><button class="btn-save" onclick="saveNC('nce')">Enregistrer</button></div>
 </div></div>
@@ -1255,27 +1504,32 @@ function renderPagination(type,total){
 }
 function goPage(type,p){pageN[type]=p;renderTable(type);}
 
-// ── MODAL OPEN/CLOSE ──────────────────────────────────────────────────────────
 function openModal(type,id=null){
   editId[type]=id;
   clearForm(type);
   if(id){
     const rec=allData[type]?.find(r=>r.id===id);
-    if(rec)fillForm(type,rec);
-    $(`modal-${type}-title`).textContent=`Modifier ${type.toUpperCase()}`;
+    if(rec){
+      fillForm(type,rec);
+      // Afficher le numéro existant
+      const nd=$(`${type}-numero-display`);if(nd&&rec.numero)nd.textContent=rec.numero;
+    }
   }else{
-    $(`modal-${type}-title`).textContent=`Nouvelle ${type.toUpperCase()}`;
     const today=new Date().toISOString().split('T')[0];
     const df=$(`${type}-date_detection`)||$(`${type}-date_reclamation`)||$(`${type}-date_fabrication`)||$(`${type}-date_constat`);
     if(df)df.value=today;
+    // Numéro provisoire basé sur l'année
+    const yr=new Date().getFullYear().toString().slice(-2);
+    const nd=$(`${type}-numero-display`);
+    if(nd)nd.textContent=`${type.toUpperCase()}-${yr}-XXXXX`;
   }
   $(`modal-${type}`).classList.add('open');
 }
 function closeModal(type){$(`modal-${type}`).classList.remove('open');}
 
 const FIELDS={
-  nci:['date_detection','of_ref','designation_piece','operation','type_defaut','description','qte_nc','qte_totale','cout_interne','montant_client','cause','action_corrective','responsable','delai_cloture','statut'],
-  nce:['date_reclamation','date_livraison','numero_bl','contact_client','designation_piece','operation','type_defaut','description','qte_reclamee','qte_livree','cout_interne','impact_financier','decision','cause_racine','action_corrective','responsable','delai_reponse','statut'],
+  nci:['date_detection','of_ref','num_cde_client','designation_piece','operation','type_defaut','description','qte_nc','qte_totale','qte_refusee_inutilisable','qte_refusee_utilisable','qte_acceptee','cout_interne','cout_production','cout_matiere','cout_transport','cout_indirect','montant_client','cause','action_corrective','responsable','delai_cloture','statut'],
+  nce:['date_reclamation','date_livraison','numero_bl','contact_client','designation_piece','operation','type_defaut','description','qte_reclamee','qte_livree','qte_refusee_inutilisable','qte_refusee_utilisable','qte_acceptee','cout_interne','cout_production','cout_matiere','cout_transport','cout_indirect','impact_financier','decision','cause_racine','action_corrective','responsable','delai_reponse','statut'],
   nct:['date_fabrication','of_ref','operation','temps_prevu','temps_reel','nbre_pieces','cout_interne','cause','type_cause','action_amelioration','responsable','statut'],
   ncm:['date_constat','of_operation','equipement','num_inventaire','type_degradation','description','gravite','origine','cout_pieces','cout_mo','cout_indisponibilite','action_realisee','type_intervention','prestataire','date_cloture','statut']
 };
@@ -1285,6 +1539,11 @@ function clearForm(type){
   const csi=$(`${type}-client_search`);if(csi)csi.value='';
   const cid=$(`${type}-client_id`);if(cid)cid.value='';
   const cn=$(`${type}-client_nom`);if(cn)cn.value='';
+  if(type==='nci'||type==='nce'){
+    [`${type}-cout_production`,`${type}-cout_matiere`,`${type}-cout_transport`,`${type}-cout_indirect`].forEach(id=>{const el=$(id);if(el)el.value=0;});
+    calcCoutsNC(type);
+    filterCauses(type,'');
+  }
   if(type==='ncm'){$('ncm-cout_pieces').value=0;$('ncm-cout_mo').value=0;$('ncm-cout_indisponibilite').value=0;calcCoutTotal();}
   if(type==='nct'){const ep=$('ecart-preview');if(ep)ep.style.display='none';}
 }
@@ -1310,6 +1569,7 @@ function fillForm(type,rec){
   }
   if(type==='ncm')calcCoutTotal();
   if(type==='nct')calcEcart();
+  if(type==='nci'||type==='nce')calcCoutsNC(type);
 }
 
 // ── SAVE NC ───────────────────────────────────────────────────────────────────
@@ -1334,7 +1594,21 @@ async function deleteNC(type,id){
 }
 
 // ── CALCULS ───────────────────────────────────────────────────────────────────
-function calcCoutTotal(){
+function calcCoutsNC(type) {
+  const p = parseFloat(document.getElementById(`${type}-cout_production`)?.value)||0;
+  const m = parseFloat(document.getElementById(`${type}-cout_matiere`)?.value)||0;
+  const t = parseFloat(document.getElementById(`${type}-cout_transport`)?.value)||0;
+  const i = parseFloat(document.getElementById(`${type}-cout_indirect`)?.value)||0;
+  const total = Math.max(p+m+t+i, 50);
+  const display = document.getElementById(`${type}-cout-total-display`);
+  const hidden = document.getElementById(`${type}-cout_interne`);
+  if(display) display.textContent = total.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
+  if(hidden) hidden.value = total;
+  // Couleur selon min appliqué
+  if(display) display.style.color = (p+m+t+i) < 50 ? 'var(--warn)' : 'var(--accent)';
+}
+
+
   const p=parseFloat($('ncm-cout_pieces')?.value)||0;
   const m=parseFloat($('ncm-cout_mo')?.value)||0;
   const i=parseFloat($('ncm-cout_indisponibilite')?.value)||0;
