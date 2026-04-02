@@ -1608,7 +1608,7 @@ function calcCoutsNC(type) {
   if(display) display.style.color = (p+m+t+i) < 50 ? 'var(--warn)' : 'var(--accent)';
 }
 
-
+function calcCoutTotal(){
   const p=parseFloat($('ncm-cout_pieces')?.value)||0;
   const m=parseFloat($('ncm-cout_mo')?.value)||0;
   const i=parseFloat($('ncm-cout_indisponibilite')?.value)||0;
