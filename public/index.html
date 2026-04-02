@@ -256,17 +256,52 @@ td.mono{font-family:monospace;font-size:.82rem}
     <div class="page active" id="page-dashboard">
       <div class="page-header"><div class="page-title">Tableau de bord</div></div>
       <div class="stats-grid">
-        <div class="stat-card nci"><div class="label">NC Internes</div><div class="value" id="kpi-nci">—</div><div class="sub" id="kpi-nci-sub">chargement…</div></div>
-        <div class="stat-card nce"><div class="label">NC Externes</div><div class="value" id="kpi-nce">—</div><div class="sub" id="kpi-nce-sub">chargement…</div></div>
-        <div class="stat-card nct"><div class="label">NC Temps</div><div class="value" id="kpi-nct">—</div><div class="sub" id="kpi-nct-sub">chargement…</div></div>
-        <div class="stat-card ncm"><div class="label">NC Matériel</div><div class="value" id="kpi-ncm">—</div><div class="sub" id="kpi-ncm-sub">chargement…</div></div>
+        <div class="stat-card nci" onclick="showPage('nci')" style="cursor:pointer;transition:transform .15s,box-shadow .15s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(59,130,246,.2)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+          <div class="label">NC Internes</div><div class="value" id="kpi-nci">—</div><div class="sub" id="kpi-nci-sub">chargement…</div>
+          <div style="font-size:.7rem;color:var(--nci);margin-top:6px;opacity:.7">→ Voir les NCI</div>
+        </div>
+        <div class="stat-card nce" onclick="showPage('nce')" style="cursor:pointer;transition:transform .15s,box-shadow .15s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(239,68,68,.2)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+          <div class="label">NC Externes</div><div class="value" id="kpi-nce">—</div><div class="sub" id="kpi-nce-sub">chargement…</div>
+          <div style="font-size:.7rem;color:var(--nce);margin-top:6px;opacity:.7">→ Voir les NCE</div>
+        </div>
+        <div class="stat-card nct" onclick="showPage('nct')" style="cursor:pointer;transition:transform .15s,box-shadow .15s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(34,197,94,.2)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+          <div class="label">NC Temps</div><div class="value" id="kpi-nct">—</div><div class="sub" id="kpi-nct-sub">chargement…</div>
+          <div style="font-size:.7rem;color:var(--nct);margin-top:6px;opacity:.7">→ Voir les NCT</div>
+        </div>
+        <div class="stat-card ncm" onclick="showPage('ncm')" style="cursor:pointer;transition:transform .15s,box-shadow .15s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(168,85,247,.2)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+          <div class="label">NC Matériel</div><div class="value" id="kpi-ncm">—</div><div class="sub" id="kpi-ncm-sub">chargement…</div>
+          <div style="font-size:.7rem;color:var(--ncm);margin-top:6px;opacity:.7">→ Voir les NCM</div>
+        </div>
       </div>
       <div class="dash-grid">
         <div class="dash-card"><div class="dash-card-title">Dernières NC saisies</div><div id="recent-list"></div></div>
         <div class="dash-card">
           <div class="dash-card-title">Indicateurs financiers</div>
-          <div id="fin-list"></div>
-          <div style="margin-top:16px"><div class="dash-card-title">Top clients NC</div><div id="top-clients"></div></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+            <div style="font-size:.72rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;grid-column:span 2;padding-bottom:4px;border-bottom:1px solid var(--border)" id="fin-mois-label">Mois en cours</div>
+            <div style="background:var(--bg3);border-radius:8px;padding:10px 12px">
+              <div style="font-size:.7rem;color:var(--text2);margin-bottom:3px">💰 Coût interne</div>
+              <div id="fin-mois-interne" style="font-size:1rem;font-weight:700;color:var(--text)">—</div>
+            </div>
+            <div style="background:var(--bg3);border-radius:8px;padding:10px 12px">
+              <div style="font-size:.7rem;color:var(--text2);margin-bottom:3px">🧾 Impact client</div>
+              <div id="fin-mois-client" style="font-size:1rem;font-weight:700;color:var(--nce)">—</div>
+            </div>
+            <div style="font-size:.72rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;grid-column:span 2;padding-bottom:4px;border-bottom:1px solid var(--border);margin-top:6px" id="fin-annee-label">Année en cours</div>
+            <div style="background:var(--bg3);border-radius:8px;padding:10px 12px">
+              <div style="font-size:.7rem;color:var(--text2);margin-bottom:3px">💰 Coût interne</div>
+              <div id="fin-annee-interne" style="font-size:1rem;font-weight:700;color:var(--text)">—</div>
+            </div>
+            <div style="background:var(--bg3);border-radius:8px;padding:10px 12px">
+              <div style="font-size:.7rem;color:var(--text2);margin-bottom:3px">🧾 Impact client</div>
+              <div id="fin-annee-client" style="font-size:1rem;font-weight:700;color:var(--nce)">—</div>
+            </div>
+            <div style="background:var(--bg3);border-radius:8px;padding:10px 12px">
+              <div style="font-size:.7rem;color:var(--text2);margin-bottom:3px">🔧 Coût dégradations</div>
+              <div id="fin-annee-materiel" style="font-size:1rem;font-weight:700;color:var(--ncm)">—</div>
+            </div>
+          </div>
+          <div style="margin-top:12px"><div class="dash-card-title">Top clients NC</div><div id="top-clients"></div></div>
         </div>
       </div>
     </div>
@@ -1427,22 +1462,38 @@ document.addEventListener('click',e=>{
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
 async function loadDashboard(){
   try{
-    const s=await api('GET','/api/stats');
+    const [s, rapport] = await Promise.all([
+      api('GET','/api/stats'),
+      api('GET','/api/rapport')
+    ]);
     const sum=arr=>arr.reduce((a,r)=>a+parseInt(r.count||0),0);
     const enc=(arr,st='En cours')=>(arr.find(r=>r.statut===st)||{count:0}).count;
     $('kpi-nci').textContent=sum(s.nci);$('kpi-nci-sub').textContent=enc(s.nci)+' en cours';
     $('kpi-nce').textContent=sum(s.nce);$('kpi-nce-sub').textContent=enc(s.nce)+' en cours';
     $('kpi-nct').textContent=sum(s.nct);$('kpi-nct-sub').textContent=enc(s.nct)+' en cours';
     $('kpi-ncm').textContent=sum(s.ncm);$('kpi-ncm-sub').textContent=enc(s.ncm)+' en cours';
+
+    // Labels période
+    const moisNom = rapport.moisLabel.charAt(0).toUpperCase()+rapport.moisLabel.slice(1);
+    const el = $('fin-mois-label'); if(el) el.textContent = moisNom;
+    const el2 = $('fin-annee-label'); if(el2) el2.textContent = `Année ${rapport.year}`;
+
+    // Indicateurs mois
+    $('fin-mois-interne').textContent = fmtEur(rapport.mois.cout_interne);
+    $('fin-mois-client').textContent = fmtEur(rapport.mois.montant_client);
+
+    // Indicateurs année
+    $('fin-annee-interne').textContent = fmtEur(rapport.annee.cout_interne);
+    $('fin-annee-client').textContent = fmtEur(rapport.annee.montant_client);
+    $('fin-annee-materiel').textContent = fmtEur(rapport.annee.cout_materiel);
+
     $('recent-list').innerHTML=s.recent.map(r=>`
-      <div class="recent-item">
+      <div class="recent-item" onclick="showPage('${r.type.toLowerCase()}')" style="cursor:pointer">
         <div class="recent-type type-${r.type.toLowerCase()}">${r.type}</div>
         <div class="recent-info"><div class="recent-num">${r.numero}</div><div class="recent-client">${r.client||'—'}</div></div>
         ${badge(r.statut)}<div style="font-size:.75rem;color:var(--text2)">${fmtDate(r.date)}</div>
       </div>`).join('')||'<div style="color:var(--text2);font-size:.85rem">Aucune NC</div>';
-    $('fin-list').innerHTML=`
-      <div style="display:flex;justify-content:space-between;font-size:.85rem;padding:7px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text2)">💰 Coût réclamations (NCE)</span><span style="color:var(--nce);font-weight:700">${fmtEur(s.total_financier_ext)}</span></div>
-      <div style="display:flex;justify-content:space-between;font-size:.85rem;padding:7px 0"><span style="color:var(--text2)">🔧 Coût dégradations (NCM)</span><span style="color:var(--ncm);font-weight:700">${fmtEur(s.total_cout_materiel)}</span></div>`;
+
     $('top-clients').innerHTML=s.top_clients.length?s.top_clients.map(c=>`
       <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:.83rem">
         <span>${c.client_nom}</span><span class="nc-count">${c.total} NC</span>
